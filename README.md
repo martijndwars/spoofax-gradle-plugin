@@ -39,6 +39,7 @@ repositories {
 
 spoofax {
   strategoFormat = 'ctree'
+  overrides = []
 }
 ```
 
@@ -56,6 +57,8 @@ org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
 
 ## Recipes
 
+### Multi-project build
+
 If you have a multi-project build in which one Spoofax project depends upon another:
 
 ```groovy
@@ -64,7 +67,21 @@ dependencies {
 }
 ```
 
-To publish the Spoofax language artifact:
+### Override versions
+
+To override any of the language dependencies:
+
+```groovy
+spoofax {
+  overrides = [
+    'com.acme:foo.lang:1.2.3'
+  ]
+}
+```
+
+### Publishing (TODO)
+
+If you want to publish the Spoofax language artifact:
 
 ```groovy
 publishing {
@@ -77,6 +94,14 @@ publishing {
     repositories {
         // Your Artifactory.
     }
+}
+```
+
+(WIP) If you want to force the version of a dependency:
+
+```groovy
+configurations.all {
+    resolutionStrategy.force 'com.acme:acme-lang:1.2.3'
 }
 ```
 

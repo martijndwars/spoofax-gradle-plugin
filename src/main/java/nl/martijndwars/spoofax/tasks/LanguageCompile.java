@@ -1,6 +1,7 @@
 package nl.martijndwars.spoofax.tasks;
 
 import java.io.IOException;
+import java.util.List;
 
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
@@ -14,7 +15,6 @@ import org.metaborg.core.build.BuildInputBuilder;
 import org.metaborg.core.messages.StreamMessagePrinter;
 import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
-import org.metaborg.spoofax.meta.core.config.StrategoFormat;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
@@ -23,14 +23,28 @@ public class LanguageCompile extends LanguageTask {
   private static final ILogger logger = LoggerUtils.logger(LanguageCompile.class);
 
   protected final Property<String> strategoFormat;
+  protected final Property<String> version;
+  protected final Property<List> overrides;
 
   public LanguageCompile() {
     strategoFormat = getProject().getObjects().property(String.class);
+    version = getProject().getObjects().property(String.class);
+    overrides = getProject().getObjects().property(List.class);
   }
 
   @Input
   public Property<String> getStrategoFormat() {
     return strategoFormat;
+  }
+
+  @Input
+  public Property<String> getVersion() {
+    return version;
+  }
+
+  @Input
+  public Property<List> getOverrides() {
+    return overrides;
   }
 
   @TaskAction
@@ -69,12 +83,6 @@ public class LanguageCompile extends LanguageTask {
   protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
     ISpoofaxLanguageSpec languageSpec = super.languageSpec();
 
-    if (!strategoFormat.isPresent()) {
-      return languageSpec;
-    }
-
-    StrategoFormat strategoFormatEnum = StrategoFormat.valueOf(strategoFormat.get());
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormatEnum);
+    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, version, overrides);
   }
 }
