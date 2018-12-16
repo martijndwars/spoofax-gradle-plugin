@@ -3,9 +3,11 @@ package nl.martijndwars.spoofax;
 import javax.inject.Inject;
 import java.io.File;
 import java.util.Collection;
-import java.util.LinkedList;
-import java.util.stream.Collectors;
+import java.util.List;
 
+import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
+import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.LanguageArchive;
 import nl.martijndwars.spoofax.tasks.LanguageClean;
 import nl.martijndwars.spoofax.tasks.LanguageCompile;
@@ -16,13 +18,13 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.artifacts.PublishArtifact;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler;
+import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
 import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionContainer;
@@ -31,13 +33,16 @@ import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.config.IProjectConfig;
+import org.metaborg.core.config.IProjectConfigService;
 import org.metaborg.core.language.ILanguageComponent;
 import org.metaborg.core.language.ILanguageImpl;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.core.project.IProject;
 import org.metaborg.core.project.ISimpleProjectService;
+import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
+import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
 
 public class SpoofaxPlugin implements Plugin<Project> {
   /**
@@ -76,10 +81,12 @@ public class SpoofaxPlugin implements Plugin<Project> {
   public static final String SPOOFAX_LANGUAGE_TYPE = "spoofax-language";
 
   protected final BaseRepositoryFactory repositoryFactory;
+  protected final DependencyFactory dependencyFactory;
 
   @Inject
-  public SpoofaxPlugin(BaseRepositoryFactory repositoryFactory) {
+  public SpoofaxPlugin(BaseRepositoryFactory repositoryFactory, DependencyFactory dependencyFactory) {
     this.repositoryFactory = repositoryFactory;
+    this.dependencyFactory = dependencyFactory;
   }
 
   @Override
@@ -90,14 +97,15 @@ public class SpoofaxPlugin implements Plugin<Project> {
     configureRepository(project);
     configureConfigurations(project);
     configureBuild(project);
-    configureArtifact(project);
     configureExtension(project);
+    configureArtifact(project);
 
-    try {
+    // Delay configuration until the version and overrides (on SpoofaxExtension) are set
+    project.afterEvaluate(innerProject -> {
+      configureArchiveTask(project);
+      configureOverrides(project);
       configureLanugageDependencies(project);
-    } catch (MetaborgException e) {
-      e.printStackTrace();
-    }
+    });
   }
 
   private void configureRepository(Project project) {
@@ -154,45 +162,93 @@ public class SpoofaxPlugin implements Plugin<Project> {
     compileLanguageTask.dependsOn(dependency);
   }
 
-  private void configureArtifact(Project project) {
-    TaskContainer tasks = project.getTasks();
-    LanguageArchive archiveLanguageTask = (LanguageArchive) tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
-    File archiveFile = archiveLanguageTask.getArchiveFile();
-
-    ArtifactHandler artifacts = project.getArtifacts();
-    PublishArtifact artifact = artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, archiveFile, configureArtifact -> {
-      configureArtifact.builtBy(ARCHIVE_LANGUAGE_TASK_NAME);
-    });
-  }
-
   private void configureExtension(Project project) {
-    ExtensionContainer extensions = project.getExtensions();
-    SpoofaxExtension extension = extensions.create("spoofax", SpoofaxExtension.class, project);
+    SpoofaxExtension extension = getOrCreateExtension(project);
 
     project.getTasks().named(COMPILE_LANGUAGE_TASK_NAME, LanguageCompile.class).configure(languageCompile -> {
       languageCompile.getStrategoFormat().set(extension.getStrategoFormat());
+      languageCompile.getVersion().set(extension.getVersion());
+      languageCompile.getOverrides().set(extension.getOverrides());
+    });
+
+    project.getTasks().named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
+      languageArchive.getStrategoFormat().set(extension.getStrategoFormat());
+      languageArchive.getVersion().set(extension.getVersion());
+      languageArchive.getOverrides().set(extension.getOverrides());
     });
   }
 
-  private void configureLanugageDependencies(Project project) throws MetaborgException {
-    IProjectConfig config = spoofaxProject(project).config();
+  private void configureArtifact(Project project) {
+    TaskContainer tasks = project.getTasks();
+    LanguageArchive archiveLanguageTask = (LanguageArchive) tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
 
-    ConfigurationContainer configurations = project.getConfigurations();
-    Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
-    Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+    ArtifactHandler artifacts = project.getArtifacts();
+    artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, archiveLanguageTask.getOutputFile(), configureArtifact ->
+      configureArtifact.builtBy(ARCHIVE_LANGUAGE_TASK_NAME)
+    );
+  }
 
-    Collection<Dependency> compileDependencies = createDependencies(project, config.compileDeps());
-    Collection<Dependency> sourceDependencies = createDependencies(project, config.sourceDeps());
+  private void configureArchiveTask(Project project) {
+    TaskContainer tasks = project.getTasks();
+    tasks.named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
+      try {
+        File outputFile = project.file("target/" + Utils.archiveFileName(languageSpec(project)));
 
-    compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
-    sourceLanguageConfiguration.getDependencies().addAll(sourceDependencies);
+        languageArchive.getOutputFile().set(outputFile);
+      } catch (MetaborgException e) {
+        e.printStackTrace();
+      }
+    });
+  }
+
+  @SuppressWarnings("unchecked")
+  private void configureOverrides(Project project) {
+    SpoofaxExtension spoofaxExtension = getOrCreateExtension(project);
+    List overrides = spoofaxExtension.getOverrides().get();
+
+    GradleSpoofaxProjectConfigService projectConfigService = (GradleSpoofaxProjectConfigService) spoofax.injector.getInstance(IProjectConfigService.class);
+    projectConfigService.setOverrides(overrides);
+
+    for (Object override : overrides) {
+      project.getLogger().info("Override language dependency " + override);
+    }
+  }
+
+  private void configureLanugageDependencies(Project project) {
+    project.getLogger().info("Configure language dependencies");
+
+    try {
+      IProjectConfig config = spoofaxProject(project).config();
+
+      ConfigurationContainer configurations = project.getConfigurations();
+      Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
+      Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+
+      Collection<Dependency> compileDependencies = createDependencies(project, config.compileDeps());
+      Collection<Dependency> sourceDependencies = createDependencies(project, config.sourceDeps());
+
+      compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
+      sourceLanguageConfiguration.getDependencies().addAll(sourceDependencies);
+    } catch (MetaborgException e) {
+      throw new RuntimeException("Unable to load projct config.");
+    }
+  }
+
+  public static SpoofaxExtension getOrCreateExtension(Project project) {
+    ExtensionContainer extensions = project.getExtensions();
+    SpoofaxExtension spoofaxExtension = extensions.findByType(SpoofaxExtension.class);
+
+    if (spoofaxExtension != null) {
+      return spoofaxExtension;
+    }
+
+    return extensions.create("spoofax", SpoofaxExtension.class, project);
   }
 
   public static void loadLanguageDependencies(Project project) throws MetaborgException {
     project.getLogger().info("Loading language components from dependencies");
 
     ConfigurationContainer configurations = project.getConfigurations();
-
     Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
     Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
 
@@ -201,6 +257,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     loadLanguages(project, compileLanguageFiles);
     loadLanguages(project, sourceLanguageFiles);
+  }
+
+  protected ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
+    return spoofaxMeta.languageSpecService.get(spoofaxProject(project));
   }
 
   public static IProject spoofaxProject(Project project) throws MetaborgException {
@@ -220,10 +280,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
     return projectService.create(location);
   }
 
-  public static Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> languageIdentifiers) {
-    return languageIdentifiers.stream()
-        .map(languageIdentifier -> createDependency(project, languageIdentifier))
-        .collect(Collectors.toCollection(LinkedList::new));
+  public static Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> identifiers) {
+    return Collections2.transform(identifiers, languageIdentifier ->
+      createDependency(project, languageIdentifier)
+    );
   }
 
   public static Dependency createDependency(Project project, LanguageIdentifier languageIdentifier) {
