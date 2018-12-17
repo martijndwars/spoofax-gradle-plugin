@@ -93,14 +93,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     configureArtifact(project);
     configureExtension(project);
 
-    // Defer evaluation until after the repositories are defined
-    project.afterEvaluate(innerProject -> {
-      try {
-        loadLanguageDependencies(innerProject);
-      } catch (MetaborgException e) {
-        throw new RuntimeException("An unexpected error occurred while loading language dependencies.", e);
-      }
-    });
+    try {
+      configureLanugageDependencies(project);
+    } catch (MetaborgException e) {
+      e.printStackTrace();
+    }
   }
 
   private void configureRepository(Project project) {
@@ -177,9 +174,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
     });
   }
 
-  private void loadLanguageDependencies(Project project) throws MetaborgException {
-    project.getLogger().info("Loading language components from dependencies");
-
+  private void configureLanugageDependencies(Project project) throws MetaborgException {
     IProjectConfig config = spoofaxProject(project).config();
 
     ConfigurationContainer configurations = project.getConfigurations();
@@ -191,19 +186,31 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
     sourceLanguageConfiguration.getDependencies().addAll(sourceDependencies);
-
-    loadLanguages(project, compileLanguageConfiguration.getIncoming().getFiles());
-    loadLanguages(project, sourceLanguageConfiguration.getIncoming().getFiles());
   }
 
-  protected IProject spoofaxProject(Project project) throws MetaborgException {
+  public static void loadLanguageDependencies(Project project) throws MetaborgException {
+    project.getLogger().info("Loading language components from dependencies");
+
+    ConfigurationContainer configurations = project.getConfigurations();
+
+    Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
+    Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+
+    FileCollection compileLanguageFiles = compileLanguageConfiguration.getIncoming().getFiles();
+    FileCollection sourceLanguageFiles = sourceLanguageConfiguration.getIncoming().getFiles();
+
+    loadLanguages(project, compileLanguageFiles);
+    loadLanguages(project, sourceLanguageFiles);
+  }
+
+  public static IProject spoofaxProject(Project project) throws MetaborgException {
     File projectDir = project.getProjectDir();
     FileObject location = spoofax.resourceService.resolve(projectDir);
 
     return getOrCreateProject(location);
   }
 
-  protected IProject getOrCreateProject(FileObject location) throws MetaborgException {
+  public static IProject getOrCreateProject(FileObject location) throws MetaborgException {
     ISimpleProjectService projectService = (ISimpleProjectService) spoofax.projectService;
 
     if (projectService.get(location) != null) {
@@ -213,25 +220,25 @@ public class SpoofaxPlugin implements Plugin<Project> {
     return projectService.create(location);
   }
 
-  protected Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> languageIdentifiers) {
+  public static Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> languageIdentifiers) {
     return languageIdentifiers.stream()
         .map(languageIdentifier -> createDependency(project, languageIdentifier))
         .collect(Collectors.toCollection(LinkedList::new));
   }
 
-  protected Dependency createDependency(Project project, LanguageIdentifier languageIdentifier) {
+  public static Dependency createDependency(Project project, LanguageIdentifier languageIdentifier) {
     DependencyHandler dependencies = project.getDependencies();
 
     return dependencies.create(languageIdentifier.toString());
   }
 
-  protected void loadLanguages(Project project, FileCollection files) throws MetaborgException {
+  public static void loadLanguages(Project project, FileCollection files) throws MetaborgException {
     for (File file : files) {
       loadLanguage(project, file);
     }
   }
 
-  protected void loadLanguage(Project project, File file) throws MetaborgException {
+  public static void loadLanguage(Project project, File file) throws MetaborgException {
     project.getLogger().debug("Loading language component from file: " + file);
 
     FileObject archiveFile = spoofax.resourceService.resolve(file);
