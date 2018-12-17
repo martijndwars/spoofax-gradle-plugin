@@ -188,7 +188,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     ArtifactHandler artifacts = project.getArtifacts();
     artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, outputFile, configureArtifact ->
-      configureArtifact.builtBy(ARCHIVE_LANGUAGE_TASK_NAME)
+      configureArtifact.builtBy(archiveLanguageTask)
     );
   }
 
