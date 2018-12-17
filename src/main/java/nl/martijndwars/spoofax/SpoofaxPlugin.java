@@ -302,11 +302,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
     }
   }
 
-  public static void loadLanguage(Project project, File file) throws MetaborgException {
-    project.getLogger().debug("Loading language component from file: " + file);
+  public static synchronized void loadLanguage(Project project, File file) throws MetaborgException {
+    project.getLogger().info("Loading language component from file: " + file);
 
     FileObject archiveFile = spoofax.resourceService.resolve(file);
-
     ILanguageImpl languageImpl = spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
 
     for (ILanguageComponent languageComponent : languageImpl.components()) {
