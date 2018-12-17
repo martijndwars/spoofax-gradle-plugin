@@ -1,39 +1,28 @@
 package nl.martijndwars.spoofax.spoofax;
 
-import javax.annotation.Nullable;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.List;
-
-import com.google.common.collect.Lists;
 import mb.nabl2.config.NaBL2Config;
 import nl.martijndwars.spoofax.Utils;
-import org.gradle.api.artifacts.Dependency;
-import org.gradle.api.internal.artifacts.dependencies.DefaultExternalModuleDependency;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
-import org.metaborg.core.config.IExportConfig;
-import org.metaborg.core.config.IGenerateConfig;
-import org.metaborg.core.config.ISourceConfig;
-import org.metaborg.core.config.JSGLRVersion;
-import org.metaborg.core.config.Sdf2tableVersion;
+import org.metaborg.core.config.*;
 import org.metaborg.core.language.LanguageContributionIdentifier;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.core.language.LanguageVersion;
-import org.metaborg.spoofax.meta.core.config.IBuildStepConfig;
-import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfig;
-import org.metaborg.spoofax.meta.core.config.PlaceholderCharacters;
-import org.metaborg.spoofax.meta.core.config.SdfVersion;
-import org.metaborg.spoofax.meta.core.config.StrategoFormat;
+import org.metaborg.spoofax.meta.core.config.*;
 import org.metaborg.util.cmd.Arguments;
+
+import javax.annotation.Nullable;
+import java.util.Collection;
+import java.util.List;
 
 // TODO: We could also hook into the ILanguageSpecConfigService?
 public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConfig {
   protected final ISpoofaxLanguageSpecConfig config;
   protected final Property<String> strategoFormat;
   protected final Property<String> version;
-  protected final Property<List> overrides;
+  protected final ListProperty<String> overrides;
 
-  public GradleSpoofaxLanguageSpecConfig(ISpoofaxLanguageSpecConfig config, Property<String> strategoFormat, Property<String> version, Property<List> overrides) {
+  public GradleSpoofaxLanguageSpecConfig(ISpoofaxLanguageSpecConfig config, Property<String> strategoFormat, Property<String> version, ListProperty<String> overrides) {
     this.config = config;
     this.strategoFormat = strategoFormat;
     this.version = version;
