@@ -4,16 +4,16 @@ The Spoofax Gradle plugin makes it possible to build Spoofax languages with Grad
 
 ## Building
 
-To compile and package the project:
+To compile and package the plugin:
 
 ```
-./gradlew assemble
+gradlew assemble
 ```
 
-To publish the artifact to Maven local:
+To publish the plugin to Maven local:
 
 ```
-./gradlew pTML
+gradlew pTML
 ```
 
 ## Usage
@@ -39,6 +39,7 @@ repositories {
 
 spoofax {
   strategoFormat = 'ctree'
+  version = '0.1.0-SNAPSHOT'
   overrides = []
 }
 ```
@@ -49,7 +50,7 @@ To build your Spoofax language:
 gradle archiveLanguage
 ```
 
-If you get a StackOverflowError or OutOfMemoryError place the following in `gradle.properties`:
+If you get a StackOverflowError or OutOfMemoryError create a `gradle.properties` with the following content:
 
 ```
 org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
@@ -59,49 +60,23 @@ org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
 
 ### Multi-project build
 
-If you have a multi-project build in which one Spoofax project depends upon another:
+If you have a [source dependency](http://www.metaborg.org/en/latest/source/core/manual/concepts.html?highlight=source%20dependency) on another project in a multi-project build:
 
 ```groovy
 dependencies {
-    compileLanguage project(':projectB')
+    sourceLanguage project(':projectB')
 }
 ```
 
 ### Override versions
 
-To override any of the language dependencies:
+To override the version of a source dependency:
 
 ```groovy
 spoofax {
   overrides = [
     'com.acme:foo.lang:1.2.3'
   ]
-}
-```
-
-### Publishing (TODO)
-
-If you want to publish the Spoofax language artifact:
-
-```groovy
-publishing {
-    publications {
-        mavenSpoofaxLanguage(MavenPublication) {
-            from components.spx
-        }
-    }
-  
-    repositories {
-        // Your Artifactory.
-    }
-}
-```
-
-(WIP) If you want to force the version of a dependency:
-
-```groovy
-configurations.all {
-    resolutionStrategy.force 'com.acme:acme-lang:1.2.3'
 }
 ```
 
@@ -117,27 +92,24 @@ The plugin applies the [Base plugin](https://docs.gradle.org/current/userguide/b
 
 The plugin defines the following tasks:
 
-* `cleanLanguage`: Clean the Spoofax language. This task is made a dependency of `clean`.
-* `compileLanguage`: Build the Spoofax language. This task is made a dependency of `assemble`.
+* `cleanLanguage`: Clean the Spoofax language. This task is a dependency of `clean`.
+* `compileLanguage`: Compile the Spoofax language. This task is a dependency of `assemble`.
+* `archiveLanguage`: Archive the Spoofax language. This task depends on `compileLanguage` and is a dependency of `assemble`.
+
+If `:projectA` has a [project lib dependency](https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:project_jar_dependencies) on `:projectB` in the `sourceLanguage` configuration, then `:projectA:compileLanguage` depends on `:projectB:archiveLanguage`.
+This ensures that all project dependencies are built before the depending project is built.
 
 ### Configurations
 
-The plugin defines two dependency configurations:
+The plugin defines three dependency configurations:
 
-* `compileLanguage`
-* `sourceLanguage`
+* `compileLanguage`: a configuration holding all the compile dependencies.
+* `sourceLanguage`: a configuration holding all the source dependencies.
+* `language`: a convenience configuration that extends `compileLanguage` and `sourceLanguage`.
 
 The plugin defines one artifact configuration:
 
 * `spoofaxLanguage`
 
-The `spoofaxLanguage` configuration contains the built Spoofax language (.spoofax-language) file. The `assemble` configuration is made to extend the `spoofaxLanguage` configuration.
-
-### Artifacts
-
-The plugin defines an `spx` artifact that contains the result of building the Spoofax language, i.e. the `.spoofax-language` file.
-
-### Software Components
-
-The plugin defines a `components.spx` that contains the `spx` artifact.
-
+The `spoofaxLanguage` configuration contains the built Spoofax language (.spoofax-language) artifact.
+The `assemble` configuration is made to extend the `spoofaxLanguage` configuration.
