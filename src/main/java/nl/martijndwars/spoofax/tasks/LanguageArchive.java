@@ -3,6 +3,7 @@ package nl.martijndwars.spoofax.tasks;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
@@ -11,19 +12,17 @@ import org.metaborg.core.MetaborgException;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
-import java.util.List;
-
 public class LanguageArchive extends LanguageTask {
   protected final RegularFileProperty outputFile;
   protected final Property<String> strategoFormat;
   protected final Property<String> version;
-  protected final Property<List> overrides;
+  protected final ListProperty<String> overrides;
 
   public LanguageArchive() {
     outputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
     version = getProject().getObjects().property(String.class);
-    overrides = getProject().getObjects().property(List.class);
+    overrides = getProject().getObjects().listProperty(String.class);
   }
 
   @Input
@@ -37,7 +36,7 @@ public class LanguageArchive extends LanguageTask {
   }
 
   @Input
-  public Property<List> getOverrides() {
+  public ListProperty<String> getOverrides() {
     return overrides;
   }
 

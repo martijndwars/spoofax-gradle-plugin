@@ -2,6 +2,7 @@ package nl.martijndwars.spoofax.tasks;
 
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
+import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.TaskAction;
@@ -17,19 +18,18 @@ import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
 
 import java.io.IOException;
-import java.util.List;
 
 public class LanguageCompile extends LanguageTask {
   private static final ILogger logger = LoggerUtils.logger(LanguageCompile.class);
 
   protected final Property<String> strategoFormat;
   protected final Property<String> version;
-  protected final Property<List> overrides;
+  protected final ListProperty<String> overrides;
 
   public LanguageCompile() {
     strategoFormat = getProject().getObjects().property(String.class);
     version = getProject().getObjects().property(String.class);
-    overrides = getProject().getObjects().property(List.class);
+    overrides = getProject().getObjects().listProperty(String.class);
   }
 
   @Input
@@ -43,7 +43,7 @@ public class LanguageCompile extends LanguageTask {
   }
 
   @Input
-  public Property<List> getOverrides() {
+  public ListProperty<String> getOverrides() {
     return overrides;
   }
 
