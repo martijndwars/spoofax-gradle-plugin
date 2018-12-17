@@ -1,31 +1,32 @@
 package nl.martijndwars.spoofax.spoofax;
 
+import mb.nabl2.config.NaBL2Config;
+import nl.martijndwars.spoofax.Utils;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
+import org.metaborg.core.config.*;
+import org.metaborg.core.language.LanguageContributionIdentifier;
+import org.metaborg.core.language.LanguageIdentifier;
+import org.metaborg.core.language.LanguageVersion;
+import org.metaborg.spoofax.meta.core.config.*;
+import org.metaborg.util.cmd.Arguments;
+
 import javax.annotation.Nullable;
 import java.util.Collection;
 import java.util.List;
 
-import mb.nabl2.config.NaBL2Config;
-import org.metaborg.core.config.IExportConfig;
-import org.metaborg.core.config.IGenerateConfig;
-import org.metaborg.core.config.ISourceConfig;
-import org.metaborg.core.config.JSGLRVersion;
-import org.metaborg.core.config.Sdf2tableVersion;
-import org.metaborg.core.language.LanguageContributionIdentifier;
-import org.metaborg.core.language.LanguageIdentifier;
-import org.metaborg.spoofax.meta.core.config.IBuildStepConfig;
-import org.metaborg.spoofax.meta.core.config.ISpoofaxLanguageSpecConfig;
-import org.metaborg.spoofax.meta.core.config.PlaceholderCharacters;
-import org.metaborg.spoofax.meta.core.config.SdfVersion;
-import org.metaborg.spoofax.meta.core.config.StrategoFormat;
-import org.metaborg.util.cmd.Arguments;
-
+// TODO: We could also hook into the ILanguageSpecConfigService?
 public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConfig {
   protected final ISpoofaxLanguageSpecConfig config;
-  protected final StrategoFormat strategoFormat;
+  protected final Property<String> strategoFormat;
+  protected final Property<String> version;
+  protected final ListProperty<String> overrides;
 
-  public GradleSpoofaxLanguageSpecConfig(ISpoofaxLanguageSpecConfig config, StrategoFormat strategoFormat) {
+  public GradleSpoofaxLanguageSpecConfig(ISpoofaxLanguageSpecConfig config, Property<String> strategoFormat, Property<String> version, ListProperty<String> overrides) {
     this.config = config;
     this.strategoFormat = strategoFormat;
+    this.version = version;
+    this.overrides = overrides;
   }
 
   @Override
@@ -66,7 +67,7 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public StrategoFormat strFormat() {
-    return strategoFormat;
+    return StrategoFormat.valueOf(strategoFormat.get());
   }
 
   @Nullable
@@ -133,7 +134,7 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public LanguageIdentifier identifier() {
-    return config.identifier();
+    return new LanguageIdentifier(config.identifier(), LanguageVersion.parse(version.get()));
   }
 
   @Override
@@ -198,7 +199,7 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public Collection<LanguageIdentifier> sourceDeps() {
-    return config.sourceDeps();
+    return Utils.transformDeps(overrides.get(), config.sourceDeps());
   }
 
   @Override
