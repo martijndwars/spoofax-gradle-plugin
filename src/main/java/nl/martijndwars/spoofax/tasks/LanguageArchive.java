@@ -1,7 +1,5 @@
 package nl.martijndwars.spoofax.tasks;
 
-import java.util.List;
-
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.file.RegularFileProperty;
@@ -12,6 +10,8 @@ import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
+
+import java.util.List;
 
 public class LanguageArchive extends LanguageTask {
   protected final RegularFileProperty outputFile;
@@ -47,17 +47,13 @@ public class LanguageArchive extends LanguageTask {
   }
 
   @TaskAction
-  public void run() {
-    try {
-      SpoofaxPlugin.loadLanguageDependencies(getProject());
+  public void run() throws MetaborgException {
+    SpoofaxPlugin.loadLanguageDependencies(getProject());
 
-      LanguageSpecBuildInput input = buildInput();
+    LanguageSpecBuildInput input = buildInput();
 
-      spoofaxMeta.metaBuilder.pkg(input);
-      spoofaxMeta.metaBuilder.archive(input);
-    } catch (MetaborgException e) {
-      throw new RuntimeException("An unexpected error occurred while archiving the language.", e);
-    }
+    spoofaxMeta.metaBuilder.pkg(input);
+    spoofaxMeta.metaBuilder.archive(input);
   }
 
   @Override

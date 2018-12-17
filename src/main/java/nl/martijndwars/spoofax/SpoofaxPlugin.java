@@ -1,12 +1,6 @@
 package nl.martijndwars.spoofax;
 
-import javax.inject.Inject;
-import java.io.File;
-import java.util.Collection;
-import java.util.List;
-
 import com.google.common.collect.Collections2;
-import com.google.common.collect.Lists;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.LanguageArchive;
 import nl.martijndwars.spoofax.tasks.LanguageClean;
@@ -22,6 +16,7 @@ import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.file.FileCollection;
+import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
@@ -41,6 +36,11 @@ import org.metaborg.core.project.IProject;
 import org.metaborg.core.project.ISimpleProjectService;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
+import javax.inject.Inject;
+import java.io.File;
+import java.util.Collection;
+import java.util.List;
+
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
 
@@ -54,6 +54,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
    * The name of the configuration that holds source language dependencies.
    */
   public static final String SOURCE_LANGUAGE_CONFIGURATION_NAME = "sourceLanguage";
+
+  /**
+   * The name of the configuration that extends compileLanguage & sourceLanguage
+   */
+  public static final String LANGUAGE_CONFIGURATION_NAME = "language";
 
   /**
    * The name of the configuration that holds the built Spoofax language artifact.
@@ -74,11 +79,6 @@ public class SpoofaxPlugin implements Plugin<Project> {
    * The name of the task that archives the language artifacts.
    */
   public static final String ARCHIVE_LANGUAGE_TASK_NAME = "archiveLanguage";
-
-  /**
-   * The name of the type of language archive.
-   */
-  public static final String SPOOFAX_LANGUAGE_TYPE = "spoofax-language";
 
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;
@@ -125,6 +125,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
     Configuration sourceLanguageConfiguration = configurations.create(SOURCE_LANGUAGE_CONFIGURATION_NAME);
     sourceLanguageConfiguration.setTransitive(false);
 
+    Configuration languageConfiguration = configurations.create(LANGUAGE_CONFIGURATION_NAME);
+    languageConfiguration.extendsFrom(compileLanguageConfiguration, sourceLanguageConfiguration);
+
     Configuration spoofaxLanguageConfiguration = configurations.create(SPOOFAX_LANGUAGE_CONFIGURATION_NAME);
     spoofaxLanguageConfiguration.setTransitive(false);
 
@@ -157,9 +160,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     // This project's compileLanguage task depends on the archiveLanguage task of each of this project's project dependencies
     ConfigurationContainer configurations = project.getConfigurations();
-    Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
-    TaskDependency dependency = compileLanguageConfiguration.getTaskDependencyFromProjectDependency(true, ARCHIVE_LANGUAGE_TASK_NAME);
-    compileLanguageTask.dependsOn(dependency);
+    Configuration configuration = configurations.getByName(LANGUAGE_CONFIGURATION_NAME);
+    TaskDependency taskDependency = configuration.getTaskDependencyFromProjectDependency(true, ARCHIVE_LANGUAGE_TASK_NAME);
+    compileLanguageTask.dependsOn(taskDependency);
   }
 
   private void configureExtension(Project project) {
@@ -181,9 +184,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
   private void configureArtifact(Project project) {
     TaskContainer tasks = project.getTasks();
     LanguageArchive archiveLanguageTask = (LanguageArchive) tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
+    RegularFileProperty outputFile = archiveLanguageTask.getOutputFile();
 
     ArtifactHandler artifacts = project.getArtifacts();
-    artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, archiveLanguageTask.getOutputFile(), configureArtifact ->
+    artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, outputFile, configureArtifact ->
       configureArtifact.builtBy(ARCHIVE_LANGUAGE_TASK_NAME)
     );
   }
