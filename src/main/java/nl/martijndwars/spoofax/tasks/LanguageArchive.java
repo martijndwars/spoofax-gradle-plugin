@@ -2,6 +2,7 @@ package nl.martijndwars.spoofax.tasks;
 
 import java.io.File;
 
+import nl.martijndwars.spoofax.SpoofaxPlugin;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
@@ -25,6 +26,8 @@ public class LanguageArchive extends LanguageTask {
   @TaskAction
   public void run() {
     try {
+      SpoofaxPlugin.loadLanguageDependencies(getProject());
+
       LanguageSpecBuildInput input = buildInput();
 
       spoofaxMeta.metaBuilder.pkg(input);

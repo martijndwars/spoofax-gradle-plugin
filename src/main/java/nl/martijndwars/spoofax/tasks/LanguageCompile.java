@@ -2,6 +2,7 @@ package nl.martijndwars.spoofax.tasks;
 
 import java.io.IOException;
 
+import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -35,6 +36,8 @@ public class LanguageCompile extends LanguageTask {
   @TaskAction
   public void run() {
     try {
+      SpoofaxPlugin.loadLanguageDependencies(getProject());
+
       LanguageSpecBuildInput input = buildInput();
       ISpoofaxLanguageSpec languageSpec = languageSpec();
 
