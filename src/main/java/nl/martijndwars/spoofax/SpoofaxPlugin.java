@@ -1,6 +1,7 @@
 package nl.martijndwars.spoofax;
 
 import com.google.common.collect.Collections2;
+import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.LanguageArchive;
 import nl.martijndwars.spoofax.tasks.LanguageClean;
@@ -24,6 +25,8 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.PluginManager;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.metaborg.core.MetaborgException;
@@ -264,7 +267,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
   }
 
   protected ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
-    return spoofaxMeta.languageSpecService.get(spoofaxProject(project));
+    ISpoofaxLanguageSpec languageSpec = spoofaxMeta.languageSpecService.get(spoofaxProject(project));
+    SpoofaxExtension spoofaxExtension = getOrCreateExtension(project);
+
+    return new GradleSpoofaxLanguageSpec(languageSpec, spoofaxExtension);
   }
 
   public static IProject spoofaxProject(Project project) throws MetaborgException {

@@ -1,5 +1,6 @@
 package nl.martijndwars.spoofax.spoofax;
 
+import nl.martijndwars.spoofax.SpoofaxExtension;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -17,6 +18,13 @@ public class GradleSpoofaxLanguageSpec implements ISpoofaxLanguageSpec {
     this.strategoFormat = strategoFormat;
     this.version = version;
     this.overrides = overrides;
+  }
+
+  public GradleSpoofaxLanguageSpec(ISpoofaxLanguageSpec spoofaxLanguageSpec, SpoofaxExtension spoofaxExtension) {
+    this.spoofaxLanguageSpec = spoofaxLanguageSpec;
+    this.strategoFormat = spoofaxExtension.getStrategoFormat();
+    this.version = spoofaxExtension.getVersion();
+    this.overrides = spoofaxExtension.getOverrides();
   }
 
   @Override
