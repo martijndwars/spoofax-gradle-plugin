@@ -13,6 +13,7 @@ import org.gradle.api.Task;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
+import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
@@ -25,8 +26,6 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.PluginManager;
-import org.gradle.api.provider.ListProperty;
-import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.metaborg.core.MetaborgException;
@@ -43,6 +42,7 @@ import javax.inject.Inject;
 import java.io.File;
 import java.util.Collection;
 import java.util.List;
+import java.util.Objects;
 
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
@@ -235,10 +235,31 @@ public class SpoofaxPlugin implements Plugin<Project> {
       Collection<Dependency> sourceDependencies = createDependencies(project, config.sourceDeps());
 
       compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
-      sourceLanguageConfiguration.getDependencies().addAll(sourceDependencies);
+
+      for (Dependency dependency : sourceDependencies) {
+        if (!contains(sourceLanguageConfiguration.getDependencies(), dependency)) {
+          project.getLogger().info("Add " + dependency + " to the sourceLanguage configuration.");
+
+          sourceLanguageConfiguration.getDependencies().add(dependency);
+        } else {
+          project.getLogger().info("Do not add " + dependency + ", because there is already a dependency with the same <group>:<name>");
+        }
+      }
     } catch (MetaborgException e) {
       throw new RuntimeException("Unable to load projct config.");
     }
+  }
+
+  private boolean contains(DependencySet dependencies, Dependency dependency) {
+    for (Dependency d : dependencies) {
+      if (Objects.equals(d.getGroup(), dependency.getGroup())) {
+        if (Objects.equals(d.getName(), dependency.getName())) {
+          return true;
+        }
+      }
+    }
+
+    return false;
   }
 
   public static SpoofaxExtension getOrCreateExtension(Project project) {
