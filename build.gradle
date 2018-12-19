@@ -16,6 +16,7 @@ repositories {
 dependencies {
     compile group: 'org.metaborg', name: 'org.metaborg.spoofax.core', version: metaborgVersion
     compile group: 'org.metaborg', name: 'org.metaborg.spoofax.meta.core', version: metaborgVersion
+    compile group: 'org.metaborg', name: 'org.metaborg.spt.core', version: metaborgVersion
 }
 
 gradlePlugin {

@@ -2,6 +2,7 @@ package nl.martijndwars.spoofax.tasks;
 
 import java.io.File;
 
+import com.google.inject.Injector;
 import nl.martijndwars.spoofax.SpoofaxInit;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.DefaultTask;
@@ -16,6 +17,7 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 public class LanguageTask extends DefaultTask {
   protected final Spoofax spoofax = SpoofaxInit.spoofax;
   protected final SpoofaxMeta spoofaxMeta = SpoofaxInit.spoofaxMeta;
+  protected final Injector sptInjector = SpoofaxInit.sptInjector;
 
   protected IProject spoofaxProject() throws MetaborgException {
     File projectDir = getProject().getProjectDir();

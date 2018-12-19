@@ -95,6 +95,7 @@ The plugin defines the following tasks:
 * `cleanLanguage`: Clean the Spoofax language. This task is a dependency of `clean`.
 * `compileLanguage`: Compile the Spoofax language. This task is a dependency of `assemble`.
 * `archiveLanguage`: Archive the Spoofax language. This task depends on `compileLanguage` and is a dependency of `assemble`.
+* `checkLanguage`: Check the Spoofax language. This task depends on `archiveLanguage` and is a dependency of `check`.
 
 If `:projectA` has a [project lib dependency](https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:project_jar_dependencies) on `:projectB` in the `sourceLanguage` configuration, then `:projectA:compileLanguage` depends on `:projectB:archiveLanguage`.
 This ensures that all project dependencies are built before the depending project is built.

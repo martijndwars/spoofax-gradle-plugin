@@ -4,6 +4,7 @@ import com.google.common.collect.Collections2;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.LanguageArchive;
+import nl.martijndwars.spoofax.tasks.LanguageCheck;
 import nl.martijndwars.spoofax.tasks.LanguageClean;
 import nl.martijndwars.spoofax.tasks.LanguageCompile;
 import org.apache.commons.vfs2.FileObject;
@@ -83,6 +84,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
    */
   public static final String ARCHIVE_LANGUAGE_TASK_NAME = "archiveLanguage";
 
+  /**
+   * The name of the task that verifies the language artifacts.
+   */
+  public static final String CHECK_LANGUAGE_TASK_NAME = "checkLanguage";
+
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;
 
@@ -153,6 +159,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     archiveLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
     archiveLanguageTask.setDescription("Archive a Spoofax language project.");
     archiveLanguageTask.dependsOn(compileLanguageTask);
+
+    LanguageCheck checkLanguageTask = tasks.create(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class);
+    checkLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
+    checkLanguageTask.setDescription("Verify a Spoofax language project.");
+    checkLanguageTask.dependsOn(archiveLanguageTask);
 
     // Hook into the lifecycle tasks exposed by the base plugin
     Task cleanTask = tasks.getByName(BasePlugin.CLEAN_TASK_NAME);
