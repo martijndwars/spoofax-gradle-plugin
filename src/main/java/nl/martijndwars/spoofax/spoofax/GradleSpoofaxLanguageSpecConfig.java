@@ -144,7 +144,7 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public Collection<LanguageContributionIdentifier> langContribs() {
-    return config.langContribs();
+    return Utils.transformContribs(overrides.get(), config.langContribs());
   }
 
   @Override

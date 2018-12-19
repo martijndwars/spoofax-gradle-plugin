@@ -2,6 +2,7 @@ package nl.martijndwars.spoofax;
 
 import com.google.common.collect.Collections2;
 import com.google.common.collect.Lists;
+import org.metaborg.core.language.LanguageContributionIdentifier;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.core.language.LanguageVersion;
 import org.metaborg.meta.core.project.ILanguageSpec;
@@ -49,6 +50,17 @@ public class Utils {
     }
 
     return null;
+  }
+
+  public static Collection<LanguageContributionIdentifier> transformContribs(List<String> overrides, Collection<LanguageContributionIdentifier> contribs) {
+    List<OverrideDependency> overrideDependencies = Lists.transform(overrides, OverrideDependency::new);
+
+    Collection<LanguageContributionIdentifier> transformedContribs = Collections2.transform(contribs, contrib ->
+      new LanguageContributionIdentifier(transformDep(overrideDependencies, contrib.id), contrib.name)
+    );
+
+    // Create a new list because transformedDeps is a view of deps and cannot be serialized
+    return Lists.newArrayList(transformedContribs);
   }
 
   static class OverrideDependency {
