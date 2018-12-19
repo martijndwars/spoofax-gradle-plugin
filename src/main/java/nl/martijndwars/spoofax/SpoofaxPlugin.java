@@ -276,15 +276,26 @@ public class SpoofaxPlugin implements Plugin<Project> {
   public static void loadLanguageDependencies(Project project) throws MetaborgException {
     project.getLogger().info("Loading language components from dependencies");
 
+    loadCompileLanguageDependencies(project);
+    loadSourceLanguageDependencies(project);
+  }
+
+  public static void loadCompileLanguageDependencies(Project project) throws MetaborgException {
+    project.getLogger().info("Loading compile language components dependencies");
+
     ConfigurationContainer configurations = project.getConfigurations();
     Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
-    Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
-
     FileCollection compileLanguageFiles = compileLanguageConfiguration.getIncoming().getFiles();
-    FileCollection sourceLanguageFiles = sourceLanguageConfiguration.getIncoming().getFiles();
-
     loadLanguages(project, compileLanguageFiles);
-    loadLanguages(project, sourceLanguageFiles);
+  }
+
+  public static void loadSourceLanguageDependencies(Project project) throws MetaborgException {
+    project.getLogger().info("Loading source language components dependencies");
+
+    ConfigurationContainer configurations = project.getConfigurations();
+    Configuration compileLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+    FileCollection compileLanguageFiles = compileLanguageConfiguration.getIncoming().getFiles();
+    loadLanguages(project, compileLanguageFiles);
   }
 
   protected ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {

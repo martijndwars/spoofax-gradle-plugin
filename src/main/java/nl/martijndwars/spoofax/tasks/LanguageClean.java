@@ -10,7 +10,7 @@ import org.metaborg.spoofax.core.resource.SpoofaxIgnoresSelector;
 public class LanguageClean extends LanguageTask {
   @TaskAction
   public void run() throws MetaborgException, InterruptedException {
-    SpoofaxPlugin.loadLanguageDependencies(getProject());
+    SpoofaxPlugin.loadCompileLanguageDependencies(getProject());
 
     CleanInput input = new CleanInputBuilder(spoofaxProject())
       .withSelector(new SpoofaxIgnoresSelector())
