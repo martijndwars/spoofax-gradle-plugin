@@ -3,6 +3,8 @@ package nl.martijndwars.spoofax.spoofax;
 import java.util.Collection;
 import java.util.List;
 
+import com.google.common.collect.Iterables;
+import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import mb.nabl2.config.NaBL2Config;
 import nl.martijndwars.spoofax.Utils;
@@ -16,8 +18,6 @@ import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.spoofax.core.config.ISpoofaxProjectConfig;
 import org.metaborg.spoofax.core.config.SpoofaxProjectConfigService;
 
-// TODO: We currently override the getter, but what if the build fetches configuration for a different project?
-
 public class GradleSpoofaxProjectConfigService implements IProjectConfigService {
   protected final SpoofaxProjectConfigService projectConfigService;
   protected List<String> overrides;
@@ -27,8 +27,19 @@ public class GradleSpoofaxProjectConfigService implements IProjectConfigService 
     this.projectConfigService = projectConfigService;
   }
 
+  // TODO: In a multi-project build, multiple projects call setOverrides on the same object. We now concat these (HACK).
   public void setOverrides(List<String> overrides) {
-    this.overrides = overrides;
+    if (this.overrides == null) {
+      this.overrides = overrides;
+    }
+
+    Iterable<String> combinedOverrides = Iterables.unmodifiableIterable(Iterables.concat(this.overrides, overrides));
+
+    this.overrides = Lists.newArrayList(combinedOverrides);
+  }
+
+  public List<String> getOverrides() {
+    return overrides;
   }
 
   @Override
@@ -73,6 +84,8 @@ public class GradleSpoofaxProjectConfigService implements IProjectConfigService 
 
           @Override
           public Collection<LanguageIdentifier> sourceDeps() {
+            List<String> overrides = getOverrides();
+
             return Utils.transformDeps(overrides, projectConfig.sourceDeps());
           }
 
