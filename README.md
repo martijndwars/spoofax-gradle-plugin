@@ -68,6 +68,34 @@ dependencies {
 }
 ```
 
+### Publish language
+
+The Spoofax plugin integrates with Gradle's `maven-publish` plugin. Add the following to your buildscript:
+
+```groovy
+plugins {
+  id 'maven-publish'
+}
+
+publishing {
+    publications {
+        simple(MavenPublication) { publication ->
+            project.spoofax.component(publication)
+        }
+    }
+
+    repositories {
+        maven {
+            url "https://repository.acme.com"
+        }
+    }
+}
+```
+
+This creates a Maven publication based on your Spoofax language specification.
+In particular, the publication's `groupId`, `artifactId`, and `version` are based on the language specification, not on the Gradle project.
+Run `gradle pTML` or `gradle publish` to publish the Spoofax language as Maven publication to your local Maven repository or remote Maven repository, respectively.
+
 ### Override versions
 
 To override the version of a source dependency:
