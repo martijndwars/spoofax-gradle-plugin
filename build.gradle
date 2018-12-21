@@ -1,6 +1,7 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id 'com.gradle.plugin-publish' version '0.10.0'
 }
 
 group 'nl.martijndwars'
@@ -19,10 +20,18 @@ dependencies {
     compile group: 'org.metaborg', name: 'org.metaborg.spt.core', version: metaborgVersion
 }
 
+pluginBundle {
+    website = 'https://github.com/MartijnDwars/spoofax-gradle-plugin'
+    vcsUrl = 'https://github.com/MartijnDwars/spoofax-gradle-plugin'
+    tags = ['spoofax', 'metaborg', 'language', 'compiler']
+}
+
 gradlePlugin {
     plugins {
         spoofaxPlugin {
             id = 'nl.martijndwars.spoofax'
+            displayName = 'Spoofax Gradle Plugin'
+            description = 'Build Spoofax languages using Gradle.'
             implementationClass = 'nl.martijndwars.spoofax.SpoofaxPlugin'
         }
     }

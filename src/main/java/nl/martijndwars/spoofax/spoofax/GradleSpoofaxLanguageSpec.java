@@ -23,7 +23,7 @@ public class GradleSpoofaxLanguageSpec implements ISpoofaxLanguageSpec {
   public GradleSpoofaxLanguageSpec(ISpoofaxLanguageSpec spoofaxLanguageSpec, SpoofaxExtension spoofaxExtension) {
     this.spoofaxLanguageSpec = spoofaxLanguageSpec;
     this.strategoFormat = spoofaxExtension.getStrategoFormat();
-    this.version = spoofaxExtension.getVersion();
+    this.version = spoofaxExtension.getLanguageVersion();
     this.overrides = spoofaxExtension.getOverrides();
   }
 

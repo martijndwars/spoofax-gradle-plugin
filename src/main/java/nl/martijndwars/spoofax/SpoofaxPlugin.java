@@ -111,11 +111,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     configureExtension(project);
     configureArtifact(project);
 
-    // Delay configuration until the version and overrides (on SpoofaxExtension) are set
+    // Delay configuration until the languageVersion and overrides (on SpoofaxExtension) are set
     project.afterEvaluate(innerProject -> {
-      configureArchiveTask(project);
-      configureOverrides(project);
-      configureLanugageDependencies(project);
+      configureArchiveTask(innerProject);
+      configureOverrides(innerProject);
+      configureLanugageDependencies(innerProject);
     });
   }
 
@@ -191,19 +191,19 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     project.getTasks().named(COMPILE_LANGUAGE_TASK_NAME, LanguageCompile.class).configure(languageCompile -> {
       languageCompile.getStrategoFormat().set(extension.getStrategoFormat());
-      languageCompile.getVersion().set(extension.getVersion());
+      languageCompile.getLanguageVersion().set(extension.getLanguageVersion());
       languageCompile.getOverrides().set(extension.getOverrides());
     });
 
     project.getTasks().named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
       languageArchive.getStrategoFormat().set(extension.getStrategoFormat());
-      languageArchive.getVersion().set(extension.getVersion());
+      languageArchive.getLanguageVersion().set(extension.getLanguageVersion());
       languageArchive.getOverrides().set(extension.getOverrides());
     });
 
     project.getTasks().named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
       languageSpx.getStrategoFormat().set(extension.getStrategoFormat());
-      languageSpx.getLanguageVersion().set(extension.getVersion());
+      languageSpx.getLanguageVersion().set(extension.getLanguageVersion());
       languageSpx.getOverrides().set(extension.getOverrides());
     });
   }
@@ -238,17 +238,16 @@ public class SpoofaxPlugin implements Plugin<Project> {
         languageSpx.getInputFile().set(inputFile);
         
         languageSpx.setBaseName(languageSpec(project).config().name());
-        languageSpx.setVersion(getOrCreateExtension(project).getVersion().get());
+        languageSpx.setVersion(getOrCreateExtension(project).getLanguageVersion().get());
       } catch (MetaborgException e) {
         e.printStackTrace();
       }
     });
   }
 
-  @SuppressWarnings("unchecked")
   private void configureOverrides(Project project) {
     SpoofaxExtension spoofaxExtension = getOrCreateExtension(project);
-    List overrides = spoofaxExtension.getOverrides().get();
+    List<String> overrides = spoofaxExtension.getOverrides().get();
 
     GradleSpoofaxProjectConfigService projectConfigService = (GradleSpoofaxProjectConfigService) spoofax.injector.getInstance(IProjectConfigService.class);
     projectConfigService.setOverrides(overrides);

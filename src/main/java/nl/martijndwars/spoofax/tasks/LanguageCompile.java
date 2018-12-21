@@ -3,12 +3,10 @@ package nl.martijndwars.spoofax.tasks;
 import nl.martijndwars.spoofax.SpoofaxInit;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
-import org.gradle.api.Project;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
-import org.gradle.api.tasks.InputDirectory;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.action.CompileGoal;
@@ -21,9 +19,7 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
 
-import java.io.File;
 import java.io.IOException;
-import java.util.Arrays;
 
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
@@ -32,12 +28,12 @@ public class LanguageCompile extends AbstractTask {
   private static final ILogger logger = LoggerUtils.logger(LanguageCompile.class);
 
   protected final Property<String> strategoFormat;
-  protected final Property<String> version;
+  protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageCompile() {
     strategoFormat = getProject().getObjects().property(String.class);
-    version = getProject().getObjects().property(String.class);
+    languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
   }
 
@@ -47,8 +43,8 @@ public class LanguageCompile extends AbstractTask {
   }
 
   @Input
-  public Property<String> getVersion() {
-    return version;
+  public Property<String> getLanguageVersion() {
+    return languageVersion;
   }
 
   @Input
@@ -93,6 +89,6 @@ public class LanguageCompile extends AbstractTask {
   protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
     ISpoofaxLanguageSpec languageSpec = SpoofaxInit.languageSpec(getProject());
 
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, version, overrides);
+    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }

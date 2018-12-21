@@ -19,13 +19,13 @@ import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
 public class LanguageArchive extends AbstractTask {
   protected final RegularFileProperty outputFile;
   protected final Property<String> strategoFormat;
-  protected final Property<String> version;
+  protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageArchive() {
     outputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
-    version = getProject().getObjects().property(String.class);
+    languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
   }
 
@@ -35,8 +35,8 @@ public class LanguageArchive extends AbstractTask {
   }
 
   @Input
-  public Property<String> getVersion() {
-    return version;
+  public Property<String> getLanguageVersion() {
+    return languageVersion;
   }
 
   @Input
@@ -68,6 +68,6 @@ public class LanguageArchive extends AbstractTask {
   protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
     ISpoofaxLanguageSpec languageSpec = SpoofaxInit.languageSpec(getProject());
 
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, version, overrides);
+    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }

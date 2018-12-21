@@ -9,7 +9,6 @@ import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.WorkResults;
 import org.gradle.api.tasks.bundling.AbstractArchiveTask;
 
-import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -29,7 +28,7 @@ public class LanguageSpx extends AbstractArchiveTask {
 
   protected final RegularFileProperty inputFile;
   protected final Property<String> strategoFormat;
-  protected final Property<String> version;
+  protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageSpx() {
@@ -38,7 +37,7 @@ public class LanguageSpx extends AbstractArchiveTask {
 
     inputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
-    version = getProject().getObjects().property(String.class);
+    languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
 
     // TODO: This necessary, because without inputs, this task is skipped. But the input should be a lazy file, as we don't know the name during configuration.
@@ -52,7 +51,7 @@ public class LanguageSpx extends AbstractArchiveTask {
 
   @Input
   public Property<String> getLanguageVersion() {
-    return version;
+    return languageVersion;
   }
 
   @Input
