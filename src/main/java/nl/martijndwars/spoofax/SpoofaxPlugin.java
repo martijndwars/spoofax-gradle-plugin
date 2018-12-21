@@ -3,10 +3,7 @@ package nl.martijndwars.spoofax;
 import com.google.common.collect.Collections2;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
-import nl.martijndwars.spoofax.tasks.LanguageArchive;
-import nl.martijndwars.spoofax.tasks.LanguageCheck;
-import nl.martijndwars.spoofax.tasks.LanguageClean;
-import nl.martijndwars.spoofax.tasks.LanguageCompile;
+import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
@@ -85,6 +82,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
   public static final String ARCHIVE_LANGUAGE_TASK_NAME = "archiveLanguage";
 
   /**
+   * The name of the task that is an AbstractArchiveTask.
+   */
+  public static final String SPX_LANGUAGE_TASK_NAME = "spx";
+
+  /**
    * The name of the task that verifies the language artifacts.
    */
   public static final String CHECK_LANGUAGE_TASK_NAME = "checkLanguage";
@@ -160,6 +162,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     archiveLanguageTask.setDescription("Archive a Spoofax language project.");
     archiveLanguageTask.dependsOn(compileLanguageTask);
 
+    LanguageSpx spxLanguageTask = tasks.create(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class);
+    spxLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
+    spxLanguageTask.setDescription("Archive a Spoofax language project.");
+    spxLanguageTask.dependsOn(archiveLanguageTask);
+
     LanguageCheck checkLanguageTask = tasks.create(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class);
     checkLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
     checkLanguageTask.setDescription("Verify a Spoofax language project.");
@@ -193,6 +200,12 @@ public class SpoofaxPlugin implements Plugin<Project> {
       languageArchive.getVersion().set(extension.getVersion());
       languageArchive.getOverrides().set(extension.getOverrides());
     });
+
+    project.getTasks().named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
+      languageSpx.getStrategoFormat().set(extension.getStrategoFormat());
+      languageSpx.getLanguageVersion().set(extension.getVersion());
+      languageSpx.getOverrides().set(extension.getOverrides());
+    });
   }
 
   private void configureArtifact(Project project) {
@@ -213,6 +226,19 @@ public class SpoofaxPlugin implements Plugin<Project> {
         File outputFile = project.file("target/" + Utils.archiveFileName(languageSpec(project)));
 
         languageArchive.getOutputFile().set(outputFile);
+      } catch (MetaborgException e) {
+        e.printStackTrace();
+      }
+    });
+
+    tasks.named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
+      try {
+        File inputFile = project.file("target/" + Utils.archiveFileName(languageSpec(project)));
+
+        languageSpx.getInputFile().set(inputFile);
+        
+        languageSpx.setBaseName(languageSpec(project).config().name());
+        languageSpx.setVersion(getOrCreateExtension(project).getVersion().get());
       } catch (MetaborgException e) {
         e.printStackTrace();
       }
