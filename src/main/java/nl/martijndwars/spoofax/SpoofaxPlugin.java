@@ -58,7 +58,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
   public static final String SOURCE_LANGUAGE_CONFIGURATION_NAME = "sourceLanguage";
 
   /**
-   * The name of the configuration that extends compileLanguage & sourceLanguage
+   * The name of the configuration that extends compileLanguage and sourceLanguage.
    */
   public static final String LANGUAGE_CONFIGURATION_NAME = "language";
 
