@@ -39,19 +39,12 @@ public class SpoofaxPluginExtension {
   public void component(MavenPublication publication) throws MetaborgException {
     TaskContainer tasks = project.getTasks();
 
-    ILanguageSpec languageSpec = SpoofaxInit.languageSpec(project);
+    ILanguageSpec languageSpec = SpoofaxInit.overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
     LanguageIdentifier identifier = languageSpec.config().identifier();
 
     publication.artifact(tasks.getByName(SpoofaxPlugin.SPX_LANGUAGE_TASK_NAME));
     publication.setGroupId(identifier.groupId);
     publication.setArtifactId(identifier.id);
-
-    if (languageVersion.get().isEmpty()) {
-      publication.setVersion(identifier.version.toString());
-    } else {
-      publication.setVersion(languageVersion.get());
-    }
-
-    // TODO: Add dependencies to the pom's xml.
+    publication.setVersion(identifier.version.toString());
   }
 }
