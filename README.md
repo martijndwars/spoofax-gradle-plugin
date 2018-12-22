@@ -51,7 +51,7 @@ org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
 
 ## Recipes
 
-### Multi-project build
+### Multi-Project Build
 
 If you have a [source dependency](http://www.metaborg.org/en/latest/source/core/manual/concepts.html?highlight=source%20dependency) on another project in a multi-project build:
 
@@ -61,13 +61,50 @@ dependencies {
 }
 ```
 
-### Publish language
+### Language Testing
+
+Assume you have a project `foo.lang` that defines the language and contains one or more .spt files.
+If you add a compile dependency on the SPT language to `metaborg.yaml`, then the `checkLanguage` task runs the SPT tests.
+For example,
+
+```yaml
+dependencies:
+  compile:
+  - org.metaborg:org.metaborg.meta.lang.spt:${metaborgVersion}
+```
+
+Assume you have a project `foo.lang` that defines the language and `foo.tests` that contains one or more .spt files.
+In `foo.tests/metaborg.yaml` add a compile dependency on SPT and a source dependency on the language under test.
+In `foo.tests/build.gradle` add a project-dependency on `:foo.lang` and configure the `checkLanguage` task by specifying the language under test.
+
+```yaml
+---
+id: org.example:foo.tests:0.1.0-SNAPSHOT
+name: foo.tests
+dependencies:
+  compile:
+  - org.metaborg:org.metaborg.meta.lang.spt:${metaborgVersion}
+  source:
+  - org.example:foo.lang:0.1.0-SNAPSHOT
+```
+
+```groovy
+dependencies {
+    sourceLanguage project(':foo.lang')
+}
+
+checkLanguage {
+    languageUnderTest = "org.example:foo.lang:$version"
+ }
+```
+
+### Language Publishing
 
 The Spoofax plugin integrates with Gradle's `maven-publish` plugin. Add the following to your buildscript:
 
 ```groovy
 plugins {
-  id 'maven-publish'
+    id 'maven-publish'
 }
 
 publishing {
@@ -95,9 +132,9 @@ To override the version of a source dependency:
 
 ```groovy
 spoofax {
-  overrides = [
-    'com.acme:foo.lang:1.2.3'
-  ]
+    overrides = [
+        'com.acme:foo.lang:1.2.3'
+    ]
 }
 ```
 
@@ -116,7 +153,7 @@ The plugin defines the following tasks:
 * `cleanLanguage`: Clean the Spoofax language. This task is a dependency of `clean`.
 * `compileLanguage`: Compile the Spoofax language. This task is a dependency of `assemble`.
 * `archiveLanguage`: Archive the Spoofax language. This task depends on `compileLanguage` and is a dependency of `assemble`.
-* `checkLanguage`: Check the Spoofax language. This task depends on `archiveLanguage` and is a dependency of `check`.
+* `checkLanguage`: Check the Spoofax language. This task depends on `archiveLanguage` and is a dependency of `check`. The property `languageUnderTest` defines the language to be tested. If this property is not specified, the current language is tested.
 
 If `:projectA` has a [project lib dependency](https://docs.gradle.org/current/userguide/multi_project_builds.html#sec:project_jar_dependencies) on `:projectB` in the `sourceLanguage` configuration, then `:projectA:compileLanguage` depends on `:projectB:archiveLanguage`.
 This ensures that all project dependencies are built before the depending project is built.

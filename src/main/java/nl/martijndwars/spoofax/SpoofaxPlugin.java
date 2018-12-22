@@ -5,6 +5,7 @@ import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -206,6 +207,12 @@ public class SpoofaxPlugin implements Plugin<Project> {
       languageSpx.getLanguageVersion().set(extension.getLanguageVersion());
       languageSpx.getOverrides().set(extension.getOverrides());
     });
+
+    project.getTasks().named(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class).configure(languageCheck -> {
+      languageCheck.getStrategoFormat().set(extension.getStrategoFormat());
+      languageCheck.getLanguageVersion().set(extension.getLanguageVersion());
+      languageCheck.getOverrides().set(extension.getOverrides());
+    });
   }
 
   private void configureArtifact(Project project) {
@@ -377,13 +384,25 @@ public class SpoofaxPlugin implements Plugin<Project> {
   }
 
   public static synchronized void loadLanguage(Project project, File file) throws MetaborgException {
-    project.getLogger().info("Loading language component from file: " + file);
-
+    project.getLogger().info("Loading language component from: " + file);
     FileObject archiveFile = spoofax.resourceService.resolve(file);
-    ILanguageImpl languageImpl = spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
 
-    for (ILanguageComponent languageComponent : languageImpl.components()) {
-      project.getLogger().info("Loaded {}", languageComponent);
+    try {
+      ILanguageImpl languageImpl = loadLanguage(archiveFile);
+
+      for (ILanguageComponent languageComponent : languageImpl.components()) {
+        project.getLogger().info("Loaded {}", languageComponent);
+      }
+    } catch (FileSystemException e) {
+      throw new RuntimeException("Unable to load language from " + file, e);
+    }
+  }
+
+  protected static ILanguageImpl loadLanguage(FileObject archiveFile) throws FileSystemException, MetaborgException {
+    if (archiveFile.isFile()) {
+      return spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
+    } else {
+      return spoofax.languageDiscoveryService.languageFromDirectory(archiveFile);
     }
   }
 }
