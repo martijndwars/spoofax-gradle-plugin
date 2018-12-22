@@ -1,9 +1,8 @@
 package nl.martijndwars.spoofax.tasks;
 
 import com.google.common.collect.Iterables;
-import nl.martijndwars.spoofax.SpoofaxInit;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
-import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
+import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -12,10 +11,13 @@ import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.language.ILanguageImpl;
 import org.metaborg.core.language.LanguageIdentifier;
+import org.metaborg.core.project.IProject;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.spt.core.SPTRunner;
 
-public class LanguageCheck extends LanguageTask {
+import static nl.martijndwars.spoofax.SpoofaxInit.*;
+
+public class LanguageCheck extends AbstractTask {
   public static final String GROUP_ID = "org.metaborg";
   public static final String LANG_SPT_ID = "org.metaborg.meta.lang.spt";
 
@@ -79,7 +81,8 @@ public class LanguageCheck extends LanguageTask {
     }
 
     getLogger().info("Running SPT tests");
-    sptInjector.getInstance(SPTRunner.class).test(languageSpec(), sptLanguageImpl, languageImpl);
+    IProject project = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
+    sptInjector.getInstance(SPTRunner.class).test(project, sptLanguageImpl, languageImpl);
   }
 
   protected ILanguageImpl getSptLanguageImpl() {
@@ -102,14 +105,9 @@ public class LanguageCheck extends LanguageTask {
     if (languageUnderTest.isPresent()) {
       return LanguageIdentifier.parseFull(languageUnderTest.get());
     } else {
-      return languageSpec().config().identifier();
+      ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
+
+      return languageSpec.config().identifier();
     }
-  }
-
-  @Override
-  protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpec = SpoofaxInit.languageSpec(getProject());
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }

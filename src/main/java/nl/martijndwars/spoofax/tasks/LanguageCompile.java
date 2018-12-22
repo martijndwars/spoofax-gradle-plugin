@@ -1,8 +1,6 @@
 package nl.martijndwars.spoofax.tasks;
 
-import nl.martijndwars.spoofax.SpoofaxInit;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
-import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -21,8 +19,7 @@ import org.metaborg.util.log.LoggerUtils;
 
 import java.io.IOException;
 
-import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
-import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
+import static nl.martijndwars.spoofax.SpoofaxInit.*;
 
 public class LanguageCompile extends AbstractTask {
   private static final ILogger logger = LoggerUtils.logger(LanguageCompile.class);
@@ -56,8 +53,8 @@ public class LanguageCompile extends AbstractTask {
   public void run() throws MetaborgException, IOException, InterruptedException {
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
-    LanguageSpecBuildInput input = buildInput();
-    ISpoofaxLanguageSpec languageSpec = languageSpec();
+    LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
+    ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
 
     getLogger().info("Generating Spoofax sources");
 
@@ -66,29 +63,17 @@ public class LanguageCompile extends AbstractTask {
 
     final BuildInputBuilder inputBuilder = new BuildInputBuilder(languageSpec);
     final BuildInput buildInput = inputBuilder
-        .withDefaultIncludePaths(true)
-        .withSourcesFromDefaultSourceLocations(true)
-        .withSelector(new SpoofaxIgnoresSelector())
-        .withMessagePrinter(new StreamMessagePrinter(spoofax.sourceTextService, true, true, logger))
-        .withThrowOnErrors(true)
-        .withPardonedLanguageStrings(languageSpec.config().pardonedLanguages())
-        .addTransformGoal(new CompileGoal())
-        .build(spoofax.dependencyService, spoofax.languagePathService);
+      .withDefaultIncludePaths(true)
+      .withSourcesFromDefaultSourceLocations(true)
+      .withSelector(new SpoofaxIgnoresSelector())
+      .withMessagePrinter(new StreamMessagePrinter(spoofax.sourceTextService, true, true, logger))
+      .withThrowOnErrors(true)
+      .withPardonedLanguageStrings(languageSpec.config().pardonedLanguages())
+      .addTransformGoal(new CompileGoal())
+      .build(spoofax.dependencyService, spoofax.languagePathService);
 
     spoofax.processorRunner.build(buildInput, null, null).schedule().block();
 
     spoofaxMeta.metaBuilder.compile(input);
-  }
-
-  protected LanguageSpecBuildInput buildInput() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpecification = languageSpec();
-
-    return new LanguageSpecBuildInput(languageSpecification);
-  }
-
-  protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpec = SpoofaxInit.languageSpec(getProject());
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }

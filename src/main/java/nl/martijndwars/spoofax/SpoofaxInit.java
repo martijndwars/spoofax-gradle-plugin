@@ -1,9 +1,12 @@
 package nl.martijndwars.spoofax;
 
 import com.google.inject.Injector;
+import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.GradleException;
 import org.gradle.api.Project;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.project.IProject;
 import org.metaborg.core.project.ISimpleProjectService;
@@ -55,5 +58,27 @@ public class SpoofaxInit {
 
   public static ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
     return spoofaxMeta.languageSpecService.get(spoofaxProject(project));
+  }
+
+  public static LanguageSpecBuildInput overridenBuildInput(
+    Project project,
+    Property<String> strategoFormat,
+    Property<String> languageVersion,
+    ListProperty<String> overrides
+  ) throws MetaborgException {
+    ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
+
+    return new LanguageSpecBuildInput(languageSpec);
+  }
+
+  public static ISpoofaxLanguageSpec overridenLanguageSpec(
+    Project project,
+    Property<String> strategoFormat,
+    Property<String> languageVersion,
+    ListProperty<String> overrides
+  ) throws MetaborgException {
+    ISpoofaxLanguageSpec languageSpec = languageSpec(project);
+
+    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }

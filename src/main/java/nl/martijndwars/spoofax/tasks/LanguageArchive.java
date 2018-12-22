@@ -1,8 +1,6 @@
 package nl.martijndwars.spoofax.tasks;
 
-import nl.martijndwars.spoofax.SpoofaxInit;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
-import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
@@ -12,8 +10,8 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
-import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
+import static nl.martijndwars.spoofax.SpoofaxInit.overridenBuildInput;
 import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
 
 public class LanguageArchive extends AbstractTask {
@@ -53,21 +51,9 @@ public class LanguageArchive extends AbstractTask {
   public void run() throws MetaborgException {
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
-    LanguageSpecBuildInput input = buildInput();
+    LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
 
     spoofaxMeta.metaBuilder.pkg(input);
     spoofaxMeta.metaBuilder.archive(input);
-  }
-
-  protected LanguageSpecBuildInput buildInput() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpecification = languageSpec();
-
-    return new LanguageSpecBuildInput(languageSpecification);
-  }
-
-  protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpec = SpoofaxInit.languageSpec(getProject());
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
   }
 }
