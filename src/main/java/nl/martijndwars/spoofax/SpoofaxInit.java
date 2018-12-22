@@ -11,6 +11,7 @@ import org.metaborg.core.MetaborgException;
 import org.metaborg.core.project.IProject;
 import org.metaborg.core.project.ISimpleProjectService;
 import org.metaborg.spoofax.core.Spoofax;
+import org.metaborg.spoofax.meta.core.SpoofaxExtensionModule;
 import org.metaborg.spoofax.meta.core.SpoofaxMeta;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
@@ -25,7 +26,7 @@ public class SpoofaxInit {
 
   static {
     try {
-      spoofax = new Spoofax(new SpoofaxGradleModule());
+      spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
       spoofaxMeta = new SpoofaxMeta(spoofax);
       sptInjector = spoofaxMeta.injector.createChildInjector(new SPTModule());
     } catch (MetaborgException e) {
