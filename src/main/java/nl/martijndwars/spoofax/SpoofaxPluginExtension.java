@@ -10,14 +10,14 @@ import org.metaborg.core.MetaborgException;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.meta.core.project.ILanguageSpec;
 
-public class SpoofaxExtension {
+public class SpoofaxPluginExtension {
   protected final Project project;
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   @Inject
-  public SpoofaxExtension(Project project) {
+  public SpoofaxPluginExtension(Project project) {
     this.project = project;
     this.strategoFormat = project.getObjects().property(String.class);
     this.languageVersion = project.getObjects().property(String.class);
@@ -45,7 +45,12 @@ public class SpoofaxExtension {
     publication.artifact(tasks.getByName(SpoofaxPlugin.SPX_LANGUAGE_TASK_NAME));
     publication.setGroupId(identifier.groupId);
     publication.setArtifactId(identifier.id);
-    publication.setVersion(languageVersion.get());
+
+    if (languageVersion.get().isEmpty()) {
+      publication.setVersion(identifier.version.toString());
+    } else {
+      publication.setVersion(languageVersion.get());
+    }
 
     // TODO: Add dependencies to the pom's xml.
   }
