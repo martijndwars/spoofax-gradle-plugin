@@ -11,12 +11,10 @@ import java.util.Collection;
 import java.util.List;
 
 public class Utils {
-  public static final String SPOOFAX_EXTENSION = "spoofax-language";
-
   public static String archiveFileName(ILanguageSpec languageSpec) {
     LanguageIdentifier identifier = languageSpec.config().identifier();
 
-    return identifier.toFileString() + "." + SPOOFAX_EXTENSION;
+    return identifier.toFileString() + "." + SpoofaxPluginConstants.SPOOFAX_EXTENSION;
   }
 
   public static Collection<LanguageIdentifier> transformDeps(List<String> overrides, Collection<LanguageIdentifier> deps) {
