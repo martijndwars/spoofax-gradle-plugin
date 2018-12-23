@@ -1,0 +1,33 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'nl.martijndwars.spoofax' version '1.0-SNAPSHOT'
+    id 'maven-publish'
+}
+
+description 'Project B'
+version '0.1.2-SNAPSHOT'
+
+repositories {
+    metaborgReleases()
+    metaborgSnapshots()
+}
+
+spoofax {
+    // strategoFormat = 'ctree'
+    languageVersion = '1.2.3-SNAPSHOT'
+    // overrides = []
+}
+
+publishing {
+    publications {
+        projectB(MavenPublication) {
+            project.spoofax.component(it)
+        }
+    }
+}
