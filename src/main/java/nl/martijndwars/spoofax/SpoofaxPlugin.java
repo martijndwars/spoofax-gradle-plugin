@@ -28,6 +28,7 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.config.IProjectConfig;
 import org.metaborg.core.config.IProjectConfigService;
@@ -135,6 +136,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     Task assembleTask = tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME);
     assembleTask.dependsOn(archiveLanguageTask);
+
+    Task checkTask = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME);
+    checkTask.dependsOn(checkLanguageTask);
 
     // This project's compileLanguage task depends on the archiveLanguage task of each of this project's project dependencies
     ConfigurationContainer configurations = project.getConfigurations();
