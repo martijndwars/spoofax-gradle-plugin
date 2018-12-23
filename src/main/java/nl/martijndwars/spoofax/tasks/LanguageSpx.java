@@ -33,14 +33,13 @@ public class LanguageSpx extends AbstractArchiveTask {
 
   public LanguageSpx() {
     setExtension(DEFAULT_EXTENSION);
-    //setBaseName("");
 
     inputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
     languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
 
-    // TODO: This necessary, because without inputs, this task is skipped. But the input should be a lazy file, as we don't know the name during configuration.
+    // This is necessary because without inputs this task is skipped.
     from(getInputFile());
   }
 
@@ -59,7 +58,6 @@ public class LanguageSpx extends AbstractArchiveTask {
     return overrides;
   }
 
-  // TODO: Should be the output of the LanguageArchive task
   public RegularFileProperty getInputFile() {
     return inputFile;
   }

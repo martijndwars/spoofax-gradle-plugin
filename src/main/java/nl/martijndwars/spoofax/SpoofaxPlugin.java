@@ -216,6 +216,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
         ListProperty<String> overrides = languageSpx.getOverrides();
         ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
 
+        // TODO: The input to languageSpx should be the output of languageArchive defined above
         File inputFile = project.file("target/" + archiveFileName(languageSpec));
 
         languageSpx.getInputFile().set(inputFile);
