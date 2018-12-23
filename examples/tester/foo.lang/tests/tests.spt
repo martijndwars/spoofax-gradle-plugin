@@ -1,0 +1,8 @@
+module tests
+
+language foo
+
+test valid string [[Foo]] parse succeeds
+
+test invalid string [[Bar]] parse fails
+

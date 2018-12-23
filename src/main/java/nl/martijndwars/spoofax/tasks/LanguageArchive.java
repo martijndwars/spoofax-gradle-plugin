@@ -1,8 +1,8 @@
 package nl.martijndwars.spoofax.tasks;
 
 import nl.martijndwars.spoofax.SpoofaxPlugin;
-import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.gradle.api.file.RegularFileProperty;
+import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -10,18 +10,20 @@ import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
-import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
-public class LanguageArchive extends LanguageTask {
+import static nl.martijndwars.spoofax.SpoofaxInit.overridenBuildInput;
+import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
+
+public class LanguageArchive extends AbstractTask {
   protected final RegularFileProperty outputFile;
   protected final Property<String> strategoFormat;
-  protected final Property<String> version;
+  protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageArchive() {
     outputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
-    version = getProject().getObjects().property(String.class);
+    languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
   }
 
@@ -31,8 +33,8 @@ public class LanguageArchive extends LanguageTask {
   }
 
   @Input
-  public Property<String> getVersion() {
-    return version;
+  public Property<String> getLanguageVersion() {
+    return languageVersion;
   }
 
   @Input
@@ -49,16 +51,9 @@ public class LanguageArchive extends LanguageTask {
   public void run() throws MetaborgException {
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
-    LanguageSpecBuildInput input = buildInput();
+    LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
 
     spoofaxMeta.metaBuilder.pkg(input);
     spoofaxMeta.metaBuilder.archive(input);
-  }
-
-  @Override
-  protected ISpoofaxLanguageSpec languageSpec() throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpec = super.languageSpec();
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, version, overrides);
   }
 }

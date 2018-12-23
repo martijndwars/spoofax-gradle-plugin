@@ -1,0 +1,39 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'nl.martijndwars.spoofax' version '1.0-SNAPSHOT'
+    id 'maven-publish'
+}
+
+apply from: 'gradle/versions.gradle'
+
+group = 'org.example'
+version = dependencyVersions.single
+description = 'Simple example'
+
+repositories {
+    mavenLocal()
+    metaborgReleases()
+    metaborgSnapshots()
+}
+
+spoofax {
+    strategoFormat = 'jar'
+    languageVersion = dependencyVersions.single
+    overrides = [
+        "oracle.gm.lang:gm_lang:${dependencyVersions.greenMarl}"
+    ]
+}
+
+publishing {
+    publications {
+        single(MavenPublication) {
+            project.spoofax.component(it)
+        }
+    }
+}

@@ -67,6 +67,10 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public StrategoFormat strFormat() {
+    if (strategoFormat.get().isEmpty()) {
+      return config.strFormat();
+    }
+
     return StrategoFormat.valueOf(strategoFormat.get());
   }
 
@@ -134,6 +138,10 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public LanguageIdentifier identifier() {
+    if (version.get().isEmpty()) {
+      return config.identifier();
+    }
+
     return new LanguageIdentifier(config.identifier(), LanguageVersion.parse(version.get()));
   }
 

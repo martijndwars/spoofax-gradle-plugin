@@ -1,13 +1,10 @@
 package nl.martijndwars.spoofax;
 
 import com.google.common.collect.Collections2;
-import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
-import nl.martijndwars.spoofax.tasks.LanguageArchive;
-import nl.martijndwars.spoofax.tasks.LanguageCheck;
-import nl.martijndwars.spoofax.tasks.LanguageClean;
-import nl.martijndwars.spoofax.tasks.LanguageCompile;
+import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
+import org.apache.commons.vfs2.FileSystemException;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -27,68 +24,31 @@ import org.gradle.api.internal.plugins.DslObject;
 import org.gradle.api.plugins.BasePlugin;
 import org.gradle.api.plugins.ExtensionContainer;
 import org.gradle.api.plugins.PluginManager;
+import org.gradle.api.provider.ListProperty;
+import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.config.IProjectConfig;
 import org.metaborg.core.config.IProjectConfigService;
 import org.metaborg.core.language.ILanguageComponent;
 import org.metaborg.core.language.ILanguageImpl;
 import org.metaborg.core.language.LanguageIdentifier;
-import org.metaborg.core.project.IProject;
-import org.metaborg.core.project.ISimpleProjectService;
 import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
 import javax.inject.Inject;
 import java.io.File;
 import java.util.Collection;
+import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
-import static nl.martijndwars.spoofax.SpoofaxInit.spoofax;
-import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
+import static nl.martijndwars.spoofax.SpoofaxInit.*;
+import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
+import static nl.martijndwars.spoofax.Utils.archiveFileName;
 
 public class SpoofaxPlugin implements Plugin<Project> {
-  /**
-   * The name of the configuration that holds compile language dependencies.
-   */
-  public static final String COMPILE_LANGUAGE_CONFIGURATION_NAME = "compileLanguage";
-
-  /**
-   * The name of the configuration that holds source language dependencies.
-   */
-  public static final String SOURCE_LANGUAGE_CONFIGURATION_NAME = "sourceLanguage";
-
-  /**
-   * The name of the configuration that extends compileLanguage & sourceLanguage
-   */
-  public static final String LANGUAGE_CONFIGURATION_NAME = "language";
-
-  /**
-   * The name of the configuration that holds the built Spoofax language artifact.
-   */
-  private static final String SPOOFAX_LANGUAGE_CONFIGURATION_NAME = "spoofaxLanguage";
-
-  /**
-   * The name of the task that compiles the language project.
-   */
-  public static final String COMPILE_LANGUAGE_TASK_NAME = "compileLanguage";
-
-  /**
-   * The name of the task that cleans the language project.
-   */
-  public static final String CLEAN_LANGUAGE_TASK_NAME = "cleanLanguage";
-
-  /**
-   * The name of the task that archives the language artifacts.
-   */
-  public static final String ARCHIVE_LANGUAGE_TASK_NAME = "archiveLanguage";
-
-  /**
-   * The name of the task that verifies the language artifacts.
-   */
-  public static final String CHECK_LANGUAGE_TASK_NAME = "checkLanguage";
-
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;
 
@@ -101,7 +61,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     PluginManager pluginManager = project.getPluginManager();
-    pluginManager.apply(org.gradle.api.plugins.BasePlugin.class);
+    pluginManager.apply(BasePlugin.class);
 
     configureRepository(project);
     configureConfigurations(project);
@@ -109,11 +69,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     configureExtension(project);
     configureArtifact(project);
 
-    // Delay configuration until the version and overrides (on SpoofaxExtension) are set
+    // Delay configuration until the languageVersion and overrides (on SpoofaxPluginExtension) are set
     project.afterEvaluate(innerProject -> {
-      configureArchiveTask(project);
-      configureOverrides(project);
-      configureLanugageDependencies(project);
+      configureArchiveTask(innerProject);
+      configureOverrides(innerProject);
+      configureLanugageDependencies(innerProject);
     });
   }
 
@@ -160,6 +120,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     archiveLanguageTask.setDescription("Archive a Spoofax language project.");
     archiveLanguageTask.dependsOn(compileLanguageTask);
 
+    LanguageSpx spxLanguageTask = tasks.create(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class);
+    spxLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
+    spxLanguageTask.setDescription("Archive a Spoofax language project.");
+    spxLanguageTask.dependsOn(archiveLanguageTask);
+
     LanguageCheck checkLanguageTask = tasks.create(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class);
     checkLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
     checkLanguageTask.setDescription("Verify a Spoofax language project.");
@@ -172,6 +137,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
     Task assembleTask = tasks.getByName(BasePlugin.ASSEMBLE_TASK_NAME);
     assembleTask.dependsOn(archiveLanguageTask);
 
+    Task checkTask = tasks.getByName(LifecycleBasePlugin.CHECK_TASK_NAME);
+    checkTask.dependsOn(checkLanguageTask);
+
     // This project's compileLanguage task depends on the archiveLanguage task of each of this project's project dependencies
     ConfigurationContainer configurations = project.getConfigurations();
     Configuration configuration = configurations.getByName(LANGUAGE_CONFIGURATION_NAME);
@@ -180,18 +148,35 @@ public class SpoofaxPlugin implements Plugin<Project> {
   }
 
   private void configureExtension(Project project) {
-    SpoofaxExtension extension = getOrCreateExtension(project);
+    ExtensionContainer extensions = project.getExtensions();
+    SpoofaxPluginExtension spoofaxPluginExtension = extensions.create(PLUGIN_EXTENSION_NAME, SpoofaxPluginExtension.class, project);
+
+    spoofaxPluginExtension.strategoFormat.set(EMPTY_VALUE);
+    spoofaxPluginExtension.languageVersion.set(EMPTY_VALUE);
+    spoofaxPluginExtension.overrides.set(Collections.emptyList());
 
     project.getTasks().named(COMPILE_LANGUAGE_TASK_NAME, LanguageCompile.class).configure(languageCompile -> {
-      languageCompile.getStrategoFormat().set(extension.getStrategoFormat());
-      languageCompile.getVersion().set(extension.getVersion());
-      languageCompile.getOverrides().set(extension.getOverrides());
+      languageCompile.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
+      languageCompile.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
+      languageCompile.getOverrides().set(spoofaxPluginExtension.getOverrides());
     });
 
     project.getTasks().named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
-      languageArchive.getStrategoFormat().set(extension.getStrategoFormat());
-      languageArchive.getVersion().set(extension.getVersion());
-      languageArchive.getOverrides().set(extension.getOverrides());
+      languageArchive.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
+      languageArchive.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
+      languageArchive.getOverrides().set(spoofaxPluginExtension.getOverrides());
+    });
+
+    project.getTasks().named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
+      languageSpx.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
+      languageSpx.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
+      languageSpx.getOverrides().set(spoofaxPluginExtension.getOverrides());
+    });
+
+    project.getTasks().named(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class).configure(languageCheck -> {
+      languageCheck.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
+      languageCheck.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
+      languageCheck.getOverrides().set(spoofaxPluginExtension.getOverrides());
     });
   }
 
@@ -208,21 +193,44 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
   private void configureArchiveTask(Project project) {
     TaskContainer tasks = project.getTasks();
+
     tasks.named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
       try {
-        File outputFile = project.file("target/" + Utils.archiveFileName(languageSpec(project)));
+        Property<String> strategoFormat = languageArchive.getStrategoFormat();
+        Property<String> languageVersion = languageArchive.getLanguageVersion();
+        ListProperty<String> overrides = languageArchive.getOverrides();
+        ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
+
+        File outputFile = project.file("target/" + archiveFileName(languageSpec));
 
         languageArchive.getOutputFile().set(outputFile);
       } catch (MetaborgException e) {
         e.printStackTrace();
       }
     });
+
+    tasks.named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
+      try {
+        Property<String> strategoFormat = languageSpx.getStrategoFormat();
+        Property<String> languageVersion = languageSpx.getLanguageVersion();
+        ListProperty<String> overrides = languageSpx.getOverrides();
+        ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
+
+        // TODO: The input to languageSpx should be the output of languageArchive defined above
+        File inputFile = project.file("target/" + archiveFileName(languageSpec));
+
+        languageSpx.getInputFile().set(inputFile);
+        languageSpx.setBaseName(languageSpec.config().name());
+        languageSpx.setVersion(languageSpec.config().identifier().version.toString());
+      } catch (MetaborgException e) {
+        e.printStackTrace();
+      }
+    });
   }
 
-  @SuppressWarnings("unchecked")
   private void configureOverrides(Project project) {
-    SpoofaxExtension spoofaxExtension = getOrCreateExtension(project);
-    List overrides = spoofaxExtension.getOverrides().get();
+    SpoofaxPluginExtension spoofaxPluginExtension = getExtension(project);
+    List<String> overrides = spoofaxPluginExtension.getOverrides().get();
 
     GradleSpoofaxProjectConfigService projectConfigService = (GradleSpoofaxProjectConfigService) spoofax.injector.getInstance(IProjectConfigService.class);
     projectConfigService.setOverrides(overrides);
@@ -273,15 +281,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
     return false;
   }
 
-  public static SpoofaxExtension getOrCreateExtension(Project project) {
+  public static SpoofaxPluginExtension getExtension(Project project) {
     ExtensionContainer extensions = project.getExtensions();
-    SpoofaxExtension spoofaxExtension = extensions.findByType(SpoofaxExtension.class);
 
-    if (spoofaxExtension != null) {
-      return spoofaxExtension;
-    }
-
-    return extensions.create("spoofax", SpoofaxExtension.class, project);
+    return extensions.findByType(SpoofaxPluginExtension.class);
   }
 
   public static void loadLanguageDependencies(Project project) throws MetaborgException {
@@ -309,30 +312,6 @@ public class SpoofaxPlugin implements Plugin<Project> {
     loadLanguages(project, compileLanguageFiles);
   }
 
-  protected ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
-    ISpoofaxLanguageSpec languageSpec = spoofaxMeta.languageSpecService.get(spoofaxProject(project));
-    SpoofaxExtension spoofaxExtension = getOrCreateExtension(project);
-
-    return new GradleSpoofaxLanguageSpec(languageSpec, spoofaxExtension);
-  }
-
-  public static IProject spoofaxProject(Project project) throws MetaborgException {
-    File projectDir = project.getProjectDir();
-    FileObject location = spoofax.resourceService.resolve(projectDir);
-
-    return getOrCreateProject(location);
-  }
-
-  public static IProject getOrCreateProject(FileObject location) throws MetaborgException {
-    ISimpleProjectService projectService = (ISimpleProjectService) spoofax.projectService;
-
-    if (projectService.get(location) != null) {
-      return projectService.get(location);
-    }
-
-    return projectService.create(location);
-  }
-
   public static Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> identifiers) {
     return Collections2.transform(identifiers, languageIdentifier ->
       createDependency(project, languageIdentifier)
@@ -352,13 +331,25 @@ public class SpoofaxPlugin implements Plugin<Project> {
   }
 
   public static synchronized void loadLanguage(Project project, File file) throws MetaborgException {
-    project.getLogger().info("Loading language component from file: " + file);
-
+    project.getLogger().info("Loading language component from: " + file);
     FileObject archiveFile = spoofax.resourceService.resolve(file);
-    ILanguageImpl languageImpl = spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
 
-    for (ILanguageComponent languageComponent : languageImpl.components()) {
-      project.getLogger().info("Loaded {}", languageComponent);
+    try {
+      ILanguageImpl languageImpl = loadLanguage(archiveFile);
+
+      for (ILanguageComponent languageComponent : languageImpl.components()) {
+        project.getLogger().info("Loaded {}", languageComponent);
+      }
+    } catch (FileSystemException e) {
+      throw new RuntimeException("Unable to load language from " + file, e);
+    }
+  }
+
+  protected static ILanguageImpl loadLanguage(FileObject archiveFile) throws FileSystemException, MetaborgException {
+    if (archiveFile.isFile()) {
+      return spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
+    } else {
+      return spoofax.languageDiscoveryService.languageFromDirectory(archiveFile);
     }
   }
 }

@@ -1,6 +1,8 @@
 plugins {
     id 'java-gradle-plugin'
     id 'maven-publish'
+    id 'signing'
+    id 'com.gradle.plugin-publish' version '0.10.0'
 }
 
 group 'nl.martijndwars'
@@ -19,12 +21,59 @@ dependencies {
     compile group: 'org.metaborg', name: 'org.metaborg.spt.core', version: metaborgVersion
 }
 
+pluginBundle {
+    website = 'https://github.com/MartijnDwars/spoofax-gradle-plugin'
+    vcsUrl = 'https://github.com/MartijnDwars/spoofax-gradle-plugin'
+    tags = ['spoofax', 'metaborg', 'language', 'compiler']
+}
+
 gradlePlugin {
     plugins {
         spoofaxPlugin {
             id = 'nl.martijndwars.spoofax'
+            displayName = 'Spoofax Gradle Plugin'
+            description = 'Build Spoofax languages using Gradle.'
             implementationClass = 'nl.martijndwars.spoofax.SpoofaxPlugin'
         }
     }
+}
+
+task javadocJar(type: Jar) {
+    classifier = 'javadoc'
+    from javadoc
+}
+
+task sourcesJar(type: Jar) {
+    classifier = 'sources'
+    from sourceSets.main.allSource
+}
+
+publishing {
+    publications {
+        mavenJava(MavenPublication) {
+            from components.java
+            artifact sourcesJar
+            artifact javadocJar
+            pom {
+                licenses {
+                    license {
+                        name = 'MIT License'
+                        url = 'https://opensource.org/licenses/MIT'
+                    }
+                }
+                developers {
+                    developer {
+                        id = 'martijndwars'
+                        name = 'Martijn Dwars'
+                        email = 'ikben@martijndwars.nl'
+                    }
+                }
+            }
+        }
+    }
+}
+
+signing {
+    sign publishing.publications.mavenJava
 }
 

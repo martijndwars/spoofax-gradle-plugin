@@ -1,0 +1,8 @@
+---
+id: org.example:foo.tests:0.1.0-SNAPSHOT
+name: foo.tests
+dependencies:
+  compile:
+  - org.metaborg:org.metaborg.meta.lang.spt:${metaborgVersion}
+  source:
+  - org.example:foo.lang:0.1.0-SNAPSHOT
