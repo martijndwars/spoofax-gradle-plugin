@@ -2,6 +2,9 @@
 
 The Spoofax Gradle plugin makes it possible to build [Spoofax](https://www.metaborg.org/) languages with Gradle.
 
+[![Build Status](https://travis-ci.com/MartijnDwars/spoofax-gradle-plugin.svg?token=shoMhBh2Xrkx994EwmBt&branch=master)](https://travis-ci.com/MartijnDwars/spoofax-gradle-plugin)
+[![Gradle Plugin Portal](https://img.shields.io/maven-metadata/v/https/plugins.gradle.org/m2/nl/martijndwars/spoofax/nl.martijndwars.spoofax.gradle.plugin/maven-metadata.xml.svg?label=gradle)](https://plugins.gradle.org/plugin/nl.martijndwars.spoofax)
+
 ## Building
 
 To compile and package the plugin:
