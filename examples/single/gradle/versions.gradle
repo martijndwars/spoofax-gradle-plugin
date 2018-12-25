@@ -1,8 +1,0 @@
-allprojects {
-  ext {
-    dependencyVersions = [
-        single: '1.2.3',
-        greenMarl: '0.1.2-20180929'
-    ]
-  }
-}

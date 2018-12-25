@@ -6,7 +6,7 @@ buildscript {
 }
 
 plugins {
-    id 'nl.martijndwars.spoofax' version '1.0-SNAPSHOT'
+    id 'nl.martijndwars.spoofax'
 }
 
 group = 'org.example'

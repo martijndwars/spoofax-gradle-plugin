@@ -6,7 +6,7 @@ dependencies:
   - org.metaborg:org.metaborg.meta.lang.esv:${metaborgVersion}
   - org.metaborg:org.metaborg.meta.lang.template:${metaborgVersion}
   source:
-  - oracle.gm.lang:gm_lang:0.1.0-FRONTEND-SNAPSHOT
+  - org.metaborg:lang.java:0.1.0-OVERRIDE
   - org.metaborg:meta.lib.spoofax:${metaborgVersion}
 pardonedLanguages:
 - EditorService

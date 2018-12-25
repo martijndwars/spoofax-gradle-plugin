@@ -1,0 +1,8 @@
+allprojects {
+    ext {
+        dependencyVersions = [
+            single: '1.2.3',
+            java: '1.0.0'
+        ]
+    }
+}
