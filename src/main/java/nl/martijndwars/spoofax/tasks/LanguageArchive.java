@@ -11,8 +11,7 @@ import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
 
-import static nl.martijndwars.spoofax.SpoofaxInit.overridenBuildInput;
-import static nl.martijndwars.spoofax.SpoofaxInit.spoofaxMeta;
+import static nl.martijndwars.spoofax.SpoofaxInit.*;
 
 public class LanguageArchive extends AbstractTask {
   protected final RegularFileProperty outputFile;
@@ -53,7 +52,7 @@ public class LanguageArchive extends AbstractTask {
 
     LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
 
-    spoofaxMeta.metaBuilder.pkg(input);
-    spoofaxMeta.metaBuilder.archive(input);
+    getSpoofaxMeta(getProject()).metaBuilder.pkg(input);
+    getSpoofaxMeta(getProject()).metaBuilder.archive(input);
   }
 }

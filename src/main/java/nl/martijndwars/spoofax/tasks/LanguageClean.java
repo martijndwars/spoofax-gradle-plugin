@@ -17,9 +17,9 @@ public class LanguageClean extends AbstractTask {
 
     CleanInput input = new CleanInputBuilder(spoofaxProject(getProject()))
       .withSelector(new SpoofaxIgnoresSelector())
-      .build(spoofax.dependencyService);
+      .build(getSpoofax(getProject()).dependencyService);
 
-    spoofax.processorRunner.clean(input, null, null).schedule().block();
-    spoofaxMeta.metaBuilder.clean(buildInput(getProject()));
+    getSpoofax(getProject()).processorRunner.clean(input, null, null).schedule().block();
+    getSpoofaxMeta(getProject()).metaBuilder.clean(buildInput(getProject()));
   }
 }

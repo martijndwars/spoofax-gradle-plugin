@@ -64,6 +64,15 @@ dependencies {
 }
 ```
 
+### Parallel Builds
+
+If you have a multi-project build, then you might be able to build projects that do not directly depend upon each other in parallel.
+To enable parallel task execution, use the `--parallel` flag or add the following to the project's `gradle.properties`:
+
+```
+org.gradle.parallel=true
+```
+
 ### Language Testing
 
 Assume you have a project `foo.lang` that defines the language and contains one or more .spt files.

@@ -232,7 +232,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
     SpoofaxPluginExtension spoofaxPluginExtension = getExtension(project);
     List<String> overrides = spoofaxPluginExtension.getOverrides().get();
 
-    GradleSpoofaxProjectConfigService projectConfigService = (GradleSpoofaxProjectConfigService) spoofax.injector.getInstance(IProjectConfigService.class);
+    GradleSpoofaxProjectConfigService projectConfigService = (GradleSpoofaxProjectConfigService) getSpoofax(project).injector.getInstance(IProjectConfigService.class);
     projectConfigService.setOverrides(overrides);
 
     for (Object override : overrides) {
@@ -332,10 +332,10 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
   public static synchronized void loadLanguage(Project project, File file) throws MetaborgException {
     project.getLogger().info("Loading language component from: " + file);
-    FileObject archiveFile = spoofax.resourceService.resolve(file);
+    FileObject archiveFile = getSpoofax(project).resourceService.resolve(file);
 
     try {
-      ILanguageImpl languageImpl = loadLanguage(archiveFile);
+      ILanguageImpl languageImpl = loadLanguage(project, archiveFile);
 
       for (ILanguageComponent languageComponent : languageImpl.components()) {
         project.getLogger().info("Loaded {}", languageComponent);
@@ -345,11 +345,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     }
   }
 
-  protected static ILanguageImpl loadLanguage(FileObject archiveFile) throws FileSystemException, MetaborgException {
+  protected static ILanguageImpl loadLanguage(Project project, FileObject archiveFile) throws FileSystemException, MetaborgException {
     if (archiveFile.isFile()) {
-      return spoofax.languageDiscoveryService.languageFromArchive(archiveFile);
+      return getSpoofax(project).languageDiscoveryService.languageFromArchive(archiveFile);
     } else {
-      return spoofax.languageDiscoveryService.languageFromDirectory(archiveFile);
+      return getSpoofax(project).languageDiscoveryService.languageFromDirectory(archiveFile);
     }
   }
 }
