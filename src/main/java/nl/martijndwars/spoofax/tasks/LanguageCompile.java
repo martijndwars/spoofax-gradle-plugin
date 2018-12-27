@@ -58,22 +58,21 @@ public class LanguageCompile extends AbstractTask {
 
     getLogger().info("Generating Spoofax sources");
 
-    spoofaxMeta.metaBuilder.initialize(input);
-    spoofaxMeta.metaBuilder.generateSources(input, null);
+    getSpoofaxMeta(getProject()).metaBuilder.initialize(input);
+    getSpoofaxMeta(getProject()).metaBuilder.generateSources(input, null);
 
     final BuildInputBuilder inputBuilder = new BuildInputBuilder(languageSpec);
     final BuildInput buildInput = inputBuilder
       .withDefaultIncludePaths(true)
       .withSourcesFromDefaultSourceLocations(true)
       .withSelector(new SpoofaxIgnoresSelector())
-      .withMessagePrinter(new StreamMessagePrinter(spoofax.sourceTextService, true, true, logger))
+      .withMessagePrinter(new StreamMessagePrinter(getSpoofax(getProject()).sourceTextService, true, true, logger))
       .withThrowOnErrors(true)
       .withPardonedLanguageStrings(languageSpec.config().pardonedLanguages())
       .addTransformGoal(new CompileGoal())
-      .build(spoofax.dependencyService, spoofax.languagePathService);
+      .build(getSpoofax(getProject()).dependencyService, getSpoofax(getProject()).languagePathService);
 
-    spoofax.processorRunner.build(buildInput, null, null).schedule().block();
-
-    spoofaxMeta.metaBuilder.compile(input);
+    getSpoofax(getProject()).processorRunner.build(buildInput, null, null).schedule().block();
+    getSpoofaxMeta(getProject()).metaBuilder.compile(input);
   }
 }

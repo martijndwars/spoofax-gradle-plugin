@@ -73,7 +73,7 @@ public class LanguageCheck extends AbstractTask {
       return;
     }
 
-    ILanguageImpl languageImpl = spoofax.languageService.getImpl(languageUnderTestIdentifier);
+    ILanguageImpl languageImpl = getSpoofax(getProject()).languageService.getImpl(languageUnderTestIdentifier);
 
     if (languageImpl == null) {
       getLogger().info("Skipping tests because language under test was not found.");
@@ -82,11 +82,11 @@ public class LanguageCheck extends AbstractTask {
 
     getLogger().info("Running SPT tests");
     IProject project = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
-    sptInjector.getInstance(SPTRunner.class).test(project, sptLanguageImpl, languageImpl);
+    getSptInjector(getProject()).getInstance(SPTRunner.class).test(project, sptLanguageImpl, languageImpl);
   }
 
   protected ILanguageImpl getSptLanguageImpl() {
-    Iterable<? extends ILanguageImpl> sptLangs = spoofax.languageService.getAllImpls(GROUP_ID, LANG_SPT_ID);
+    Iterable<? extends ILanguageImpl> sptLangs = getSpoofax(getProject()).languageService.getAllImpls(GROUP_ID, LANG_SPT_ID);
 
     final int sptLangsSize = Iterables.size(sptLangs);
 

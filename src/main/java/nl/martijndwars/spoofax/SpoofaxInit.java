@@ -3,7 +3,6 @@ package nl.martijndwars.spoofax;
 import com.google.inject.Injector;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.apache.commons.vfs2.FileObject;
-import org.gradle.api.GradleException;
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -18,31 +17,58 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.spt.core.SPTModule;
 
 import java.io.File;
+import java.util.HashMap;
+import java.util.Map;
 
 public class SpoofaxInit {
-  public static Spoofax spoofax;
-  public static SpoofaxMeta spoofaxMeta;
-  public static Injector sptInjector;
+  public static Map<Project, SpoofaxTuple> spoofaxCache;
 
   static {
+    spoofaxCache = new HashMap<>();
+  }
+
+  public static Spoofax getSpoofax(Project project) {
+    SpoofaxTuple spoofaxTuple = getSpoofaxTuple(project);
+
+    return spoofaxTuple.spoofax;
+  }
+
+  public static SpoofaxMeta getSpoofaxMeta(Project project) {
+    SpoofaxTuple spoofaxTuple = getSpoofaxTuple(project);
+
+    return spoofaxTuple.spoofaxMeta;
+  }
+
+  public static Injector getSptInjector(Project project) {
+    return getSpoofaxMeta(project).injector.createChildInjector(new SPTModule());
+  }
+
+  private static SpoofaxTuple getSpoofaxTuple(Project project) {
+    if (spoofaxCache.containsKey(project)) {
+      return spoofaxCache.get(project);
+    }
+
     try {
-      spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
-      spoofaxMeta = new SpoofaxMeta(spoofax);
-      sptInjector = spoofaxMeta.injector.createChildInjector(new SPTModule());
-    } catch (MetaborgException e) {
-      throw new GradleException("Unable to load Spoofax", e);
+      Spoofax spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
+      SpoofaxMeta spoofaxMeta = new SpoofaxMeta(spoofax);
+      SpoofaxTuple spoofaxTuple = new SpoofaxTuple(spoofax, spoofaxMeta);
+      spoofaxCache.put(project, spoofaxTuple);
+
+      return spoofaxTuple;
+    } catch (Exception e) {
+      throw new RuntimeException("Unable to create the Spoofax instance.", e);
     }
   }
 
   public static IProject spoofaxProject(Project project) throws MetaborgException {
     File projectDir = project.getProjectDir();
-    FileObject location = spoofax.resourceService.resolve(projectDir);
+    FileObject location = getSpoofax(project).resourceService.resolve(projectDir);
 
-    return getOrCreateSpoofaxProject(location);
+    return getOrCreateSpoofaxProject(project, location);
   }
 
-  public static IProject getOrCreateSpoofaxProject(FileObject location) throws MetaborgException {
-    ISimpleProjectService projectService = (ISimpleProjectService) spoofax.projectService;
+  public static IProject getOrCreateSpoofaxProject(Project project, FileObject location) throws MetaborgException {
+    ISimpleProjectService projectService = (ISimpleProjectService) getSpoofax(project).projectService;
 
     if (projectService.get(location) != null) {
       return projectService.get(location);
@@ -58,7 +84,7 @@ public class SpoofaxInit {
   }
 
   public static ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
-    return spoofaxMeta.languageSpecService.get(spoofaxProject(project));
+    return getSpoofaxMeta(project).languageSpecService.get(spoofaxProject(project));
   }
 
   public static LanguageSpecBuildInput overridenBuildInput(
@@ -81,5 +107,15 @@ public class SpoofaxInit {
     ISpoofaxLanguageSpec languageSpec = languageSpec(project);
 
     return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);
+  }
+
+  private static class SpoofaxTuple {
+    public Spoofax spoofax;
+    public SpoofaxMeta spoofaxMeta;
+
+    public SpoofaxTuple(Spoofax spoofax, SpoofaxMeta spoofaxMeta) {
+      this.spoofax = spoofax;
+      this.spoofaxMeta = spoofaxMeta;
+    }
   }
 }
