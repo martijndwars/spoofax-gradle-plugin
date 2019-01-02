@@ -156,7 +156,7 @@ The plugin modifies the build in several ways.
 
 ### Plugins
 
-The plugin applies the [Base plugin](https://docs.gradle.org/current/userguide/base_plugin.html) to the project.
+The plugin applies the [Java plugin](https://docs.gradle.org/current/userguide/java_plugin.html) to your project, which in turn applies the [Base plugin](https://docs.gradle.org/current/userguide/base_plugin.html) to your project.
 
 ### Tasks
 

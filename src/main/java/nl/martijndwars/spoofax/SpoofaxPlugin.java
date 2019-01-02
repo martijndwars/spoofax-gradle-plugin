@@ -5,6 +5,7 @@ import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
+import org.gradle.api.NonNullApi;
 import org.gradle.api.Plugin;
 import org.gradle.api.Project;
 import org.gradle.api.Task;
@@ -21,11 +22,11 @@ import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
 import org.gradle.api.internal.plugins.DslObject;
-import org.gradle.api.plugins.BasePlugin;
-import org.gradle.api.plugins.ExtensionContainer;
-import org.gradle.api.plugins.PluginManager;
+import org.gradle.api.plugins.*;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.tasks.SourceSet;
+import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
@@ -48,6 +49,7 @@ import static nl.martijndwars.spoofax.SpoofaxInit.*;
 import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
 import static nl.martijndwars.spoofax.Utils.archiveFileName;
 
+@NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;
@@ -61,16 +63,17 @@ public class SpoofaxPlugin implements Plugin<Project> {
   @Override
   public void apply(Project project) {
     PluginManager pluginManager = project.getPluginManager();
-    pluginManager.apply(BasePlugin.class);
+    pluginManager.apply(JavaPlugin.class);
 
     configureRepository(project);
     configureConfigurations(project);
     configureBuild(project);
+    configureJava(project);
     configureExtension(project);
-    configureArtifact(project);
 
     // Delay configuration until the languageVersion and overrides (on SpoofaxPluginExtension) are set
     project.afterEvaluate(innerProject -> {
+      //configureArtifact(innerProject);
       configureArchiveTask(innerProject);
       configureOverrides(innerProject);
       configureLanugageDependencies(innerProject);
@@ -145,6 +148,24 @@ public class SpoofaxPlugin implements Plugin<Project> {
     Configuration configuration = configurations.getByName(LANGUAGE_CONFIGURATION_NAME);
     TaskDependency taskDependency = configuration.getTaskDependencyFromProjectDependency(true, ARCHIVE_LANGUAGE_TASK_NAME);
     compileLanguageTask.dependsOn(taskDependency);
+  }
+
+  private void configureJava(Project project) {
+    // Modify source set to use the classic Spoofax language directory layout
+    Convention convention = project.getConvention();
+    JavaPluginConvention javaPluginConvention = convention.getPlugin(JavaPluginConvention.class);
+    SourceSetContainer sourceSets = javaPluginConvention.getSourceSets();
+    SourceSet sourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
+    sourceSet.java(action -> action.srcDirs("src/main/ds", "src-gen/stratego-java", "src-gen/ds-java"));
+
+    // Hook into the tasks exposed by the java plugin
+    TaskContainer tasks = project.getTasks();
+    Task compileJava = tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
+    Task compileLanguage = tasks.getByName(COMPILE_LANGUAGE_TASK_NAME);
+    Task archiveLanguage = tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
+
+    compileJava.dependsOn(compileLanguage);
+    archiveLanguage.dependsOn(compileJava);
   }
 
   private void configureExtension(Project project) {
