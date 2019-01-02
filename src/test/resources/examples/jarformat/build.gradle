@@ -1,0 +1,27 @@
+buildscript {
+    repositories {
+        mavenLocal()
+        mavenCentral()
+    }
+}
+
+plugins {
+    id 'nl.martijndwars.spoofax'
+}
+
+group = 'org.example'
+version = '0.1.0-SNAPSHOT'
+description = 'Simple example'
+
+repositories {
+    mavenLocal()
+    metaborgReleases()
+    metaborgSnapshots()
+    jcenter()
+}
+
+spoofax {
+    strategoFormat = 'jar'
+    languageVersion = version
+    overrides = []
+}
