@@ -184,3 +184,11 @@ The plugin defines one artifact configuration:
 
 The `spoofaxLanguage` configuration contains the built Spoofax language (.spoofax-language) artifact.
 The `assemble` configuration is made to extend the `spoofaxLanguage` configuration.
+
+## Java Compilation
+
+The `compileLanguage` task generates Java sources, and the `archiveLanguage` task expects the generated Java sources to be compiled.
+The `compileJava` task sits in between (it depends on `compileLanguage` and is a dependency of `archiveLanguage`).
+A moderately large Spoofax project may generate _many_ Java files.
+In fact, Spoofax generates so many Java files that the default JDK compiler runs out of memory (even with -Xmx4g).
+For this reason, we use the the Eclipse Java Compiler (ECJ).

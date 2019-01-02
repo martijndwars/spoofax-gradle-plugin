@@ -1,6 +1,7 @@
 package nl.martijndwars.spoofax;
 
 import com.google.common.collect.Collections2;
+import com.google.common.collect.Lists;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
@@ -29,6 +30,9 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
+import org.gradle.api.tasks.compile.CompileOptions;
+import org.gradle.api.tasks.compile.ForkOptions;
+import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.config.IProjectConfig;
@@ -51,6 +55,13 @@ import static nl.martijndwars.spoofax.Utils.archiveFileName;
 
 @NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
+  public static final String ECJ_CONFIGURATION = "ecj";
+  public static final String ECJ_DEPENDENCY = "org.eclipse.jdt.core.compiler:ecj:4.6.1";
+  public static final String ECJ_MAIN = "org.eclipse.jdt.internal.compiler.batch.Main";
+  public static final String ECJ_CP = "-classpath";
+  public static final String ECJ_OPTS = "-nowarn";
+  public static final String SPOOFAX_CORE_DEPENDENCY = "org.metaborg:org.metaborg.spoofax.core:2.5.1";
+
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;
 
@@ -71,12 +82,40 @@ public class SpoofaxPlugin implements Plugin<Project> {
     configureJava(project);
     configureExtension(project);
 
-    // Delay configuration until the languageVersion and overrides (on SpoofaxPluginExtension) are set
+    // Delay configuration until the SpoofaxPluginExtension is configured and repositories have been defined
     project.afterEvaluate(innerProject -> {
+      configureEcj(innerProject);
       //configureArtifact(innerProject);
       configureArchiveTask(innerProject);
       configureOverrides(innerProject);
       configureLanugageDependencies(innerProject);
+    });
+  }
+
+  private void configureEcj(Project project) {
+    ConfigurationContainer configurations = project.getConfigurations();
+    Configuration ecjConfiguration = configurations.create(ECJ_CONFIGURATION);
+
+    DependencyHandler dependencies = project.getDependencies();
+    dependencies.add(ECJ_CONFIGURATION, ECJ_DEPENDENCY);
+
+    TaskContainer tasks = project.getTasks();
+    tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task -> {
+      // Fork a new Java process that runs the Eclipse compiler
+      CompileOptions compileOptions = task.getOptions();
+      compileOptions.setFork(true);
+
+      ForkOptions forkOptions = compileOptions.getForkOptions();
+      forkOptions.setExecutable("java");
+      forkOptions.setJvmArgs(Lists.newArrayList(ECJ_CP, ecjConfiguration.getAsPath(), ECJ_MAIN, ECJ_OPTS));
+
+      // Copy over classes to the place where Spoofax expects them
+      task.doLast(action -> {
+        project.copy(copySpec -> {
+          copySpec.from(project.getBuildDir() + "/classes/java/main");
+          copySpec.into("target/classes");
+        });
+      });
     });
   }
 
@@ -156,7 +195,14 @@ public class SpoofaxPlugin implements Plugin<Project> {
     JavaPluginConvention javaPluginConvention = convention.getPlugin(JavaPluginConvention.class);
     SourceSetContainer sourceSets = javaPluginConvention.getSourceSets();
     SourceSet sourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-    sourceSet.java(action -> action.srcDirs("src/main/ds", "src-gen/stratego-java", "src-gen/ds-java"));
+    sourceSet.java(action -> action.setSrcDirs(getSourceDirs()));
+
+    // Add compileOnly dependency on org.metaborg.spoofax.core to the project
+    DependencyHandler dependencies = project.getDependencies();
+    Dependency dependency = dependencies.create(SPOOFAX_CORE_DEPENDENCY);
+    ConfigurationContainer configurations = project.getConfigurations();
+    Configuration compileOnlyConfiguration = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME);
+    compileOnlyConfiguration.getDependencies().add(dependency);
 
     // Hook into the tasks exposed by the java plugin
     TaskContainer tasks = project.getTasks();
@@ -166,6 +212,15 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     compileJava.dependsOn(compileLanguage);
     archiveLanguage.dependsOn(compileJava);
+  }
+
+  private Iterable<String> getSourceDirs() {
+    return Lists.newArrayList(
+      "src/main/strategies",
+      "src/main/ds",
+      "src-gen/stratego-java",
+      "src-gen/ds-java"
+    );
   }
 
   private void configureExtension(Project project) {
