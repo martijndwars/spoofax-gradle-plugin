@@ -93,6 +93,10 @@ public class LanguageCompile extends AbstractTask {
     File file = getProject().file("target/metaborg/editor.esv.af");
     Path path = file.toPath();
 
+    if (!file.exists()) {
+      return;
+    }
+
     try {
       String content = new String(Files.readAllBytes(path), UTF_8);
 
