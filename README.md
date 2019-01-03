@@ -29,6 +29,7 @@ plugins {
 }
 
 repositories {
+    jcenter()
     spoofaxRepos()
 }
 
@@ -106,7 +107,7 @@ dependencies {
 
 checkLanguage {
     languageUnderTest = "org.example:foo.lang:$version"
- }
+}
 ```
 
 ### Language Publishing
@@ -186,8 +187,25 @@ The `assemble` configuration is made to extend the `spoofaxLanguage` configurati
 
 ## Java Compilation
 
-The `compileLanguage` task generates Java sources, and the `archiveLanguage` task expects the generated Java sources to be compiled.
-The `compileJava` task sits in between (it depends on `compileLanguage` and is a dependency of `archiveLanguage`).
-A moderately large Spoofax project may generate _many_ Java files.
-In fact, Spoofax generates so many Java files that the default JDK compiler runs out of memory (even with -Xmx4g).
-For this reason, we use the the Eclipse Java Compiler (ECJ).
+The `compileLanguage` task generates Java sources and the `archiveLanguage` task expects the generated Java sources to be compiled.
+Hence, the plugin configures `compileJava` to d epend on `compileLanguage` and to be a dependency of `archiveLanguage`.
+
+A moderately large Spoofax project generates _many_ Java files.
+In fact, Spoofax generates so many Java files that the default JDK compiler runs out of memory (even with `-Xmx4g`).
+For this reason, the plugin configures `compileJava` to use the the [Eclipse Java Compiler (ECJ)](https://www.eclipse.org/jdt/core/).
+
+The generated Java sources need to be compiled against the Spoofax API.
+For this reason, the plugin adds a `compileOnly` dependency on `org.metaborg.spoofax.core`.
+A consequence is that a plugin user needs to add repositories in which all transitive dependencies can be resolved.
+
+## Repositories
+
+The plugin adds a `spoofaxRepos()` function. When used, this function adds all of the following repositories at once:
+
+* Metaborg Releaess
+* Metaborg Snapshots
+* Pluto Build
+* Sugar Lang
+* UseTheSource
+
+In addition, you need to add a repository where the ECJ can be resolved, e.g. `jcenter()`.

@@ -2,8 +2,10 @@
 
 * Improvement: Apply the Java plugin instead of the Base plugin. Run `compileJava` between `compileLanguage` and `archiveLanguage`.
 * Improvement: Configure `compileJava` to use the ECJ compiler (instead of default JDK compiler) to compile the huge mess of Spoofax-generated Java.
+* Improvement: Add a `compileOnly` dependency on `org.metaborg.spoofax.core`, since the Spoofax-generated Java needs to be compiled against the Spoofax API.
 * Improvement: Modify the generated `editor.esv.af` to use the semantics provider that was configured in the Gradle build (i.e. jar or ctree).
 * Improvement: Hijack the functionality in `StrategoRuntimeFacetFromESV` to return the .jar or .ctree file depending on the configured strategoFormat (i.e. jar or ctree).
+* Improvement: Add shorthand `spoofaxRepos` to add all repositories that are needed for a Spoofax build (metaborg releases, metaborg snapshots, sugar-lang, pluto-build, usethesource) at once.
 
 # 1.0.1
 
