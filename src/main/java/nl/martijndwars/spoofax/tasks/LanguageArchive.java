@@ -5,11 +5,15 @@ import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
+import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
+import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
+
+import java.io.File;
 
 import static nl.martijndwars.spoofax.SpoofaxInit.*;
 
@@ -44,6 +48,25 @@ public class LanguageArchive extends AbstractTask {
   @OutputFile
   public RegularFileProperty getOutputFile() {
     return outputFile;
+  }
+
+  public Provider<File> getLazyOutputFile() {
+    LanguageSpecBuildInput buildInput = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
+    LanguageIdentifier identifier = buildInput.languageSpec().config().identifier();
+
+    return languageVersion.map(version -> {
+      String actualVersion = getActualVersion(identifier, version);
+
+      return getProject().file("target/" + identifier.id + "-" + actualVersion + ".spoofax-language");
+    });
+  }
+
+  protected String getActualVersion(LanguageIdentifier identifier, String version) {
+    if (version.isEmpty()) {
+      return identifier.version.toString();
+    } else {
+      return version;
+    }
   }
 
   @TaskAction

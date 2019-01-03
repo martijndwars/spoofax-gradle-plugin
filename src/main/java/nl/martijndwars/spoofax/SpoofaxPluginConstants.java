@@ -49,7 +49,7 @@ public class SpoofaxPluginConstants {
   /**
    * The name of the plugin extension.
    */
-  public static final String PLUGIN_EXTENSION_NAME = "spoofax";
+  public static final String EXTENSION_NAME = "spoofax";
 
   /**
    * An empty value means 'do not override the language spec'.

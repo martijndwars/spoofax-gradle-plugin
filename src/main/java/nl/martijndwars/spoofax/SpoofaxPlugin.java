@@ -18,7 +18,6 @@ import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
 import org.gradle.api.file.FileCollection;
-import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler;
 import org.gradle.api.internal.artifacts.dsl.dependencies.DependencyFactory;
@@ -45,7 +44,6 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import javax.inject.Inject;
 import java.io.File;
 import java.util.Collection;
-import java.util.Collections;
 import java.util.List;
 import java.util.Objects;
 
@@ -77,15 +75,15 @@ public class SpoofaxPlugin implements Plugin<Project> {
     pluginManager.apply(JavaPlugin.class);
 
     configureRepository(project);
-    configureConfigurations(project);
-    configureBuild(project);
-    configureJava(project);
     configureExtension(project);
+    configureConfigurations(project);
+    configureTasks(project);
+    configureJava(project);
 
     // Delay configuration until the SpoofaxPluginExtension is configured and repositories have been defined
     project.afterEvaluate(innerProject -> {
+      configureArtifact(innerProject);
       configureEcj(innerProject);
-      //configureArtifact(innerProject);
       configureArchiveTask(innerProject);
       configureOverrides(innerProject);
       configureLanugageDependencies(innerProject);
@@ -142,11 +140,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     Configuration spoofaxLanguageConfiguration = configurations.create(SPOOFAX_LANGUAGE_CONFIGURATION_NAME);
     spoofaxLanguageConfiguration.setTransitive(false);
 
-    Configuration defaultConfiguration = configurations.getByName(Dependency.DEFAULT_CONFIGURATION);
-    defaultConfiguration.extendsFrom(spoofaxLanguageConfiguration);
+    Configuration runtimeElementsConfiguration = configurations.getByName(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME);
+    runtimeElementsConfiguration.extendsFrom(spoofaxLanguageConfiguration);
   }
 
-  private void configureBuild(Project project) {
+  private void configureTasks(Project project) {
     TaskContainer tasks = project.getTasks();
 
     LanguageClean cleanLanguageTask = tasks.create(CLEAN_LANGUAGE_TASK_NAME, LanguageClean.class);
@@ -171,6 +169,25 @@ public class SpoofaxPlugin implements Plugin<Project> {
     checkLanguageTask.setGroup(BasePlugin.BUILD_GROUP);
     checkLanguageTask.setDescription("Verify a Spoofax language project.");
     checkLanguageTask.dependsOn(archiveLanguageTask);
+
+    // Map extension properties to task properties
+    SpoofaxPluginExtension extension = project.getExtensions().getByType(SpoofaxPluginExtension.class);
+
+    compileLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
+    compileLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
+    compileLanguageTask.getOverrides().set(extension.getOverrides());
+
+    archiveLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
+    archiveLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
+    archiveLanguageTask.getOverrides().set(extension.getOverrides());
+
+    spxLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
+    spxLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
+    spxLanguageTask.getOverrides().set(extension.getOverrides());
+
+    checkLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
+    checkLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
+    checkLanguageTask.getOverrides().set(extension.getOverrides());
 
     // Hook into the lifecycle tasks exposed by the base plugin
     Task cleanTask = tasks.getByName(BasePlugin.CLEAN_TASK_NAME);
@@ -225,44 +242,15 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
   private void configureExtension(Project project) {
     ExtensionContainer extensions = project.getExtensions();
-    SpoofaxPluginExtension spoofaxPluginExtension = extensions.create(PLUGIN_EXTENSION_NAME, SpoofaxPluginExtension.class, project);
-
-    spoofaxPluginExtension.strategoFormat.set(EMPTY_VALUE);
-    spoofaxPluginExtension.languageVersion.set(EMPTY_VALUE);
-    spoofaxPluginExtension.overrides.set(Collections.emptyList());
-
-    project.getTasks().named(COMPILE_LANGUAGE_TASK_NAME, LanguageCompile.class).configure(languageCompile -> {
-      languageCompile.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
-      languageCompile.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
-      languageCompile.getOverrides().set(spoofaxPluginExtension.getOverrides());
-    });
-
-    project.getTasks().named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
-      languageArchive.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
-      languageArchive.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
-      languageArchive.getOverrides().set(spoofaxPluginExtension.getOverrides());
-    });
-
-    project.getTasks().named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
-      languageSpx.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
-      languageSpx.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
-      languageSpx.getOverrides().set(spoofaxPluginExtension.getOverrides());
-    });
-
-    project.getTasks().named(CHECK_LANGUAGE_TASK_NAME, LanguageCheck.class).configure(languageCheck -> {
-      languageCheck.getStrategoFormat().set(spoofaxPluginExtension.getStrategoFormat());
-      languageCheck.getLanguageVersion().set(spoofaxPluginExtension.getLanguageVersion());
-      languageCheck.getOverrides().set(spoofaxPluginExtension.getOverrides());
-    });
+    extensions.create(EXTENSION_NAME, SpoofaxPluginExtension.class, project);
   }
 
   private void configureArtifact(Project project) {
     TaskContainer tasks = project.getTasks();
     LanguageArchive archiveLanguageTask = (LanguageArchive) tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
-    RegularFileProperty outputFile = archiveLanguageTask.getOutputFile();
 
     ArtifactHandler artifacts = project.getArtifacts();
-    artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, outputFile, configureArtifact ->
+    artifacts.add(SPOOFAX_LANGUAGE_CONFIGURATION_NAME, archiveLanguageTask.getLazyOutputFile(), configureArtifact ->
       configureArtifact.builtBy(archiveLanguageTask)
     );
   }
@@ -271,36 +259,28 @@ public class SpoofaxPlugin implements Plugin<Project> {
     TaskContainer tasks = project.getTasks();
 
     tasks.named(ARCHIVE_LANGUAGE_TASK_NAME, LanguageArchive.class).configure(languageArchive -> {
-      try {
-        Property<String> strategoFormat = languageArchive.getStrategoFormat();
-        Property<String> languageVersion = languageArchive.getLanguageVersion();
-        ListProperty<String> overrides = languageArchive.getOverrides();
-        ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
+      Property<String> strategoFormat = languageArchive.getStrategoFormat();
+      Property<String> languageVersion = languageArchive.getLanguageVersion();
+      ListProperty<String> overrides = languageArchive.getOverrides();
+      ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
 
-        File outputFile = project.file("target/" + archiveFileName(languageSpec));
+      File outputFile = project.file("target/" + archiveFileName(languageSpec));
 
-        languageArchive.getOutputFile().set(outputFile);
-      } catch (MetaborgException e) {
-        e.printStackTrace();
-      }
+      languageArchive.getOutputFile().set(outputFile);
     });
 
     tasks.named(SPX_LANGUAGE_TASK_NAME, LanguageSpx.class).configure(languageSpx -> {
-      try {
-        Property<String> strategoFormat = languageSpx.getStrategoFormat();
-        Property<String> languageVersion = languageSpx.getLanguageVersion();
-        ListProperty<String> overrides = languageSpx.getOverrides();
-        ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
+      Property<String> strategoFormat = languageSpx.getStrategoFormat();
+      Property<String> languageVersion = languageSpx.getLanguageVersion();
+      ListProperty<String> overrides = languageSpx.getOverrides();
+      ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
 
-        // TODO: The input to languageSpx should be the output of languageArchive defined above
-        File inputFile = project.file("target/" + archiveFileName(languageSpec));
+      // TODO: The input to languageSpx should be the output of languageArchive defined above
+      File inputFile = project.file("target/" + archiveFileName(languageSpec));
 
-        languageSpx.getInputFile().set(inputFile);
-        languageSpx.setBaseName(languageSpec.config().name());
-        languageSpx.setVersion(languageSpec.config().identifier().version.toString());
-      } catch (MetaborgException e) {
-        e.printStackTrace();
-      }
+      languageSpx.getInputFile().set(inputFile);
+      languageSpx.setBaseName(languageSpec.config().name());
+      languageSpx.setVersion(languageSpec.config().identifier().version.toString());
     });
   }
 
@@ -319,29 +299,25 @@ public class SpoofaxPlugin implements Plugin<Project> {
   private void configureLanugageDependencies(Project project) {
     project.getLogger().info("Configure language dependencies");
 
-    try {
-      IProjectConfig config = spoofaxProject(project).config();
+    IProjectConfig config = spoofaxProject(project).config();
 
-      ConfigurationContainer configurations = project.getConfigurations();
-      Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
-      Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+    ConfigurationContainer configurations = project.getConfigurations();
+    Configuration compileLanguageConfiguration = configurations.getByName(COMPILE_LANGUAGE_CONFIGURATION_NAME);
+    Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
 
-      Collection<Dependency> compileDependencies = createDependencies(project, config.compileDeps());
-      Collection<Dependency> sourceDependencies = createDependencies(project, config.sourceDeps());
+    Collection<Dependency> compileDependencies = createDependencies(project, config.compileDeps());
+    Collection<Dependency> sourceDependencies = createDependencies(project, config.sourceDeps());
 
-      compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
+    compileLanguageConfiguration.getDependencies().addAll(compileDependencies);
 
-      for (Dependency dependency : sourceDependencies) {
-        if (!contains(sourceLanguageConfiguration.getDependencies(), dependency)) {
-          project.getLogger().info("Add " + dependency + " to the sourceLanguage configuration.");
+    for (Dependency dependency : sourceDependencies) {
+      if (!contains(sourceLanguageConfiguration.getDependencies(), dependency)) {
+        project.getLogger().info("Add " + dependency + " to the sourceLanguage configuration.");
 
-          sourceLanguageConfiguration.getDependencies().add(dependency);
-        } else {
-          project.getLogger().info("Do not add " + dependency + ", because there is already a dependency with the same <group>:<name>");
-        }
+        sourceLanguageConfiguration.getDependencies().add(dependency);
+      } else {
+        project.getLogger().info("Do not add " + dependency + ", because there is already a dependency with the same <group>:<name>");
       }
-    } catch (MetaborgException e) {
-      throw new RuntimeException("Unable to load projct config.");
     }
   }
 
@@ -383,9 +359,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
     project.getLogger().info("Loading source language components dependencies");
 
     ConfigurationContainer configurations = project.getConfigurations();
-    Configuration compileLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
-    FileCollection compileLanguageFiles = compileLanguageConfiguration.getIncoming().getFiles();
-    loadLanguages(project, compileLanguageFiles);
+    Configuration sourceLanguageConfiguration = configurations.getByName(SOURCE_LANGUAGE_CONFIGURATION_NAME);
+    FileCollection sourceLanguageFiles = sourceLanguageConfiguration.getIncoming().getFiles();
+    FileCollection spoofaxSourceLanguageFiles = sourceLanguageFiles.filter(file -> file.getName().endsWith("spoofax-language"));
+
+    loadLanguages(project, spoofaxSourceLanguageFiles);
   }
 
   public static Collection<Dependency> createDependencies(Project project, Collection<LanguageIdentifier> identifiers) {

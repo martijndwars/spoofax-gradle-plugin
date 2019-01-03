@@ -60,31 +60,39 @@ public class SpoofaxInit {
     }
   }
 
-  public static IProject spoofaxProject(Project project) throws MetaborgException {
+  public static IProject spoofaxProject(Project project) {
     File projectDir = project.getProjectDir();
     FileObject location = getSpoofax(project).resourceService.resolve(projectDir);
 
     return getOrCreateSpoofaxProject(project, location);
   }
 
-  public static IProject getOrCreateSpoofaxProject(Project project, FileObject location) throws MetaborgException {
+  public static IProject getOrCreateSpoofaxProject(Project project, FileObject location) {
     ISimpleProjectService projectService = (ISimpleProjectService) getSpoofax(project).projectService;
 
     if (projectService.get(location) != null) {
       return projectService.get(location);
     }
 
-    return projectService.create(location);
+    try {
+      return projectService.create(location);
+    } catch (MetaborgException e) {
+      throw new RuntimeException("Unable to create Spoofax project.", e);
+    }
   }
 
-  public static LanguageSpecBuildInput buildInput(Project project) throws MetaborgException {
+  public static LanguageSpecBuildInput buildInput(Project project) {
     ISpoofaxLanguageSpec languageSpecification = languageSpec(project);
 
     return new LanguageSpecBuildInput(languageSpecification);
   }
 
-  public static ISpoofaxLanguageSpec languageSpec(Project project) throws MetaborgException {
-    return getSpoofaxMeta(project).languageSpecService.get(spoofaxProject(project));
+  public static ISpoofaxLanguageSpec languageSpec(Project project) {
+    try {
+      return getSpoofaxMeta(project).languageSpecService.get(spoofaxProject(project));
+    } catch (MetaborgException e) {
+      throw new RuntimeException("Unable to retrieve language specification.", e);
+    }
   }
 
   public static LanguageSpecBuildInput overridenBuildInput(
@@ -92,7 +100,7 @@ public class SpoofaxInit {
     Property<String> strategoFormat,
     Property<String> languageVersion,
     ListProperty<String> overrides
-  ) throws MetaborgException {
+  ) {
     ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);
 
     return new LanguageSpecBuildInput(languageSpec);
@@ -103,7 +111,7 @@ public class SpoofaxInit {
     Property<String> strategoFormat,
     Property<String> languageVersion,
     ListProperty<String> overrides
-  ) throws MetaborgException {
+  ) {
     ISpoofaxLanguageSpec languageSpec = languageSpec(project);
 
     return new GradleSpoofaxLanguageSpec(languageSpec, strategoFormat, languageVersion, overrides);

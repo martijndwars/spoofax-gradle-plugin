@@ -112,7 +112,7 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
     }
   }
 
-  public IComponentCreationConfigRequest request(FileObject root) throws MetaborgException {
+  public IComponentCreationConfigRequest request(FileObject root) {
     final Collection<String> errors = Lists.newLinkedList();
     final Collection<Throwable> exceptions = Lists.newLinkedList();
 
