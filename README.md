@@ -29,8 +29,7 @@ plugins {
 }
 
 repositories {
-    metaborgReleases()
-    metaborgSnapshots()
+    spoofaxRepos()
 }
 
 spoofax {

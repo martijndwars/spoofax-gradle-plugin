@@ -11,9 +11,8 @@ version = '0.1.0-SNAPSHOT'
 description = 'Foo language tests'
 
 repositories {
-    metaborgReleases()
-    metaborgSnapshots()
     jcenter()
+    spoofaxRepos()
 }
 
 spoofax {
