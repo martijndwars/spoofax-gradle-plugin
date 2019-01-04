@@ -1,4 +1,4 @@
-# 1.0.2-SNAPSHOT
+# 1.0.2
 
 * Improvement: Apply the Java plugin instead of the Base plugin. Run `compileJava` between `compileLanguage` and `archiveLanguage`.
 * Improvement: Configure `compileJava` to use the ECJ compiler (instead of default JDK compiler) to compile the huge mess of Spoofax-generated Java.
