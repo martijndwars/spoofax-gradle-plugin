@@ -37,23 +37,48 @@ public class SpoofaxRepositoryHandlerConvention {
   }
 
   public MavenArtifactRepository metaborgReleases() {
-    return container.addRepository(createRepository(METABORG_RELEASES_URL), METABORG_RELEASES_NAME);
+    return container.addRepository(createRepository(METABORG_RELEASES_URL), METABORG_RELEASES_NAME, repository ->
+      repository.mavenContent(content -> {
+        content.releasesOnly();
+        content.includeGroup("org.metaborg");
+        content.includeGroup("org.apache.commons");
+      })
+    );
   }
 
   public MavenArtifactRepository metaborgSnapshots() {
-    return container.addRepository(createRepository(METABORG_SNAPSHOTS_URL), METABORG_SNAPSHOTS_NAME);
+    return container.addRepository(createRepository(METABORG_SNAPSHOTS_URL), METABORG_SNAPSHOTS_NAME, repository ->
+      repository.mavenContent(content -> {
+        content.snapshotsOnly();
+        content.includeGroup("org.metaborg");
+        content.includeGroup("org.apache.commons");
+      })
+    );
   }
 
   public MavenArtifactRepository plutoBuild() {
-    return container.addRepository(createRepository(PLUTO_REPO_URL), PLUTO_REPO_NAME);
+    return container.addRepository(createRepository(PLUTO_REPO_URL), PLUTO_REPO_NAME, repository ->
+      repository.mavenContent(content -> {
+        content.includeGroup("build.pluto");
+        content.includeGroup("com.cedarsoftware");
+      })
+    );
   }
 
   public MavenArtifactRepository sugarLang() {
-    return container.addRepository(createRepository(SUGAR_REPO_URL), SUGAR_REPO_NAME);
+    return container.addRepository(createRepository(SUGAR_REPO_URL), SUGAR_REPO_NAME, repository ->
+      repository.mavenContent(content -> {
+        content.includeGroup("org.sugarj");
+      })
+    );
   }
 
   public MavenArtifactRepository useTheSource() {
-    return container.addRepository(createRepository(USE_THE_SOURCE_REPO_URL), USE_THE_SOURCE_REPO_NAME);
+    return container.addRepository(createRepository(USE_THE_SOURCE_REPO_URL), USE_THE_SOURCE_REPO_NAME, repository ->
+      repository.mavenContent(content -> {
+        content.includeGroup("io.usethesource");
+      })
+    );
   }
 
   private MavenArtifactRepository createRepository(String url) {
