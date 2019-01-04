@@ -10,6 +10,8 @@ import org.metaborg.core.MetaborgException;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.meta.core.project.ILanguageSpec;
 
+import java.util.Collections;
+
 import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
 
 public class SpoofaxPluginExtension {
@@ -21,9 +23,15 @@ public class SpoofaxPluginExtension {
   @Inject
   public SpoofaxPluginExtension(Project project) {
     this.project = project;
+
     this.strategoFormat = project.getObjects().property(String.class);
+    this.strategoFormat.set(EMPTY_VALUE);
+
     this.languageVersion = project.getObjects().property(String.class);
+    this.languageVersion.set(EMPTY_VALUE);
+
     this.overrides = project.getObjects().listProperty(String.class);
+    this.overrides.set(Collections.emptyList());
   }
 
   public Property<String> getStrategoFormat() {
@@ -38,7 +46,7 @@ public class SpoofaxPluginExtension {
     return overrides;
   }
 
-  public void component(MavenPublication publication) throws MetaborgException {
+  public void component(MavenPublication publication) {
     TaskContainer tasks = project.getTasks();
 
     ILanguageSpec languageSpec = SpoofaxInit.overridenLanguageSpec(project, strategoFormat, languageVersion, overrides);

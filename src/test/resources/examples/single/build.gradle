@@ -1,10 +1,3 @@
-buildscript {
-    repositories {
-        mavenLocal()
-        mavenCentral()
-    }
-}
-
 plugins {
     id 'nl.martijndwars.spoofax'
     id 'maven-publish'
@@ -17,9 +10,8 @@ version = dependencyVersions.single
 description = 'Simple example'
 
 repositories {
-    mavenLocal()
-    metaborgReleases()
-    metaborgSnapshots()
+    jcenter()
+    spoofaxRepos()
 }
 
 spoofax {

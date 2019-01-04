@@ -4,9 +4,15 @@ plugins {
 
 group = 'org.example'
 version = '0.1.0-SNAPSHOT'
-description = 'Foo language'
+description = 'Simple example'
 
 repositories {
     jcenter()
     spoofaxRepos()
+}
+
+spoofax {
+    strategoFormat = 'jar'
+    languageVersion = version
+    overrides = []
 }

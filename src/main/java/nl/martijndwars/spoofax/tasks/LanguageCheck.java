@@ -101,7 +101,7 @@ public class LanguageCheck extends AbstractTask {
     return Iterables.get(sptLangs, 0);
   }
 
-  protected LanguageIdentifier getLanguageUnderTestIdentifier() throws MetaborgException {
+  protected LanguageIdentifier getLanguageUnderTestIdentifier() {
     if (languageUnderTest.isPresent()) {
       return LanguageIdentifier.parseFull(languageUnderTest.get());
     } else {

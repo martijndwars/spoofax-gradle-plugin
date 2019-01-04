@@ -26,6 +26,17 @@ public class SpoofaxPluginFunctionalTest {
   }
 
   @Test
+  void testJarformatProject() {
+    File projectDir = new File(BASE_DIR + "/jarformat");
+    File archiveFile = new File(projectDir, "target/jarformat-0.1.0-SNAPSHOT.spoofax-language");
+
+    TaskOutcome taskOutcome = runGradleTask(projectDir, ":check");
+
+    assertEquals(SUCCESS, taskOutcome);
+    assertTrue(archiveFile.exists());
+  }
+
+  @Test
   void testTesterProjectTestItself() {
     File projectDir = new File(BASE_DIR + "/tester");
 

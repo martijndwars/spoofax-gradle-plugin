@@ -1,5 +1,6 @@
 package nl.martijndwars.spoofax.tasks;
 
+import nl.martijndwars.spoofax.SpoofaxOverrides;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
@@ -17,12 +18,18 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
 
+import java.io.File;
 import java.io.IOException;
+import java.nio.file.Files;
+import java.nio.file.Path;
 
+import static java.nio.charset.StandardCharsets.UTF_8;
 import static nl.martijndwars.spoofax.SpoofaxInit.*;
 
 public class LanguageCompile extends AbstractTask {
   private static final ILogger logger = LoggerUtils.logger(LanguageCompile.class);
+  public static final String CTREE_PROVIDER = "target/metaborg/stratego.ctree";
+  public static final String JAR_PROVIDER = "target/metaborg/stratego.jar";
 
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
@@ -56,6 +63,9 @@ public class LanguageCompile extends AbstractTask {
     LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
     ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
 
+    // HACK: Store the strategoFormat to be used by Spoofax
+    SpoofaxOverrides.set(getProject().getName(), strategoFormat.get());
+
     getLogger().info("Generating Spoofax sources");
 
     getSpoofaxMeta(getProject()).metaBuilder.initialize(input);
@@ -74,5 +84,34 @@ public class LanguageCompile extends AbstractTask {
 
     getSpoofax(getProject()).processorRunner.build(buildInput, null, null).schedule().block();
     getSpoofaxMeta(getProject()).metaBuilder.compile(input);
+
+    // HACK: Modify the editor.esv.af
+    fixPackedEsv();
+  }
+
+  protected void fixPackedEsv() {
+    File file = getProject().file("target/metaborg/editor.esv.af");
+    Path path = file.toPath();
+
+    if (!file.exists()) {
+      return;
+    }
+
+    try {
+      String content = new String(Files.readAllBytes(path), UTF_8);
+
+      switch (strategoFormat.get()) {
+        case "ctree":
+          content = content.replaceAll(JAR_PROVIDER, CTREE_PROVIDER);
+          break;
+        case "jar":
+          content = content.replaceAll(CTREE_PROVIDER, JAR_PROVIDER);
+          break;
+      }
+
+      Files.write(path, content.getBytes(UTF_8));
+    } catch (IOException e) {
+      throw new RuntimeException("Cannot read " + file, e);
+    }
   }
 }

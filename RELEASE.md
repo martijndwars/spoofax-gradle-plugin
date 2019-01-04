@@ -3,6 +3,7 @@
 1. Drop '-SNAPSHOT' from the version string. For example, `1.0.0-SNAPSHOT` becomes `1.0.0`. Do this in:
   * `build.gradle` (version specification)
   * `README.md` (usage instruction)
+  * `CHANGELOG.md` (the topmost version)
 2. Commit the changes with message `Release 1.0.0`.
 3. Tag this commit with the new version `1.0.0`.
 4. Publish the plugin to Gradle's plugin portal with `gradle publishPlugins`.
