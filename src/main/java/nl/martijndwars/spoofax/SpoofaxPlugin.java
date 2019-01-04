@@ -29,8 +29,6 @@ import org.gradle.api.tasks.SourceSet;
 import org.gradle.api.tasks.SourceSetContainer;
 import org.gradle.api.tasks.TaskContainer;
 import org.gradle.api.tasks.TaskDependency;
-import org.gradle.api.tasks.compile.CompileOptions;
-import org.gradle.api.tasks.compile.ForkOptions;
 import org.gradle.api.tasks.compile.JavaCompile;
 import org.gradle.language.base.plugins.LifecycleBasePlugin;
 import org.metaborg.core.MetaborgException;
@@ -53,11 +51,6 @@ import static nl.martijndwars.spoofax.Utils.archiveFileName;
 
 @NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
-  public static final String ECJ_CONFIGURATION = "ecj";
-  public static final String ECJ_DEPENDENCY = "org.eclipse.jdt:ecj:3.16.0";
-  public static final String ECJ_MAIN = "org.eclipse.jdt.internal.compiler.batch.Main";
-  public static final String ECJ_CP = "-classpath";
-  public static final String ECJ_OPTS = "-nowarn";
   public static final String SPOOFAX_CORE_DEPENDENCY = "org.metaborg:org.metaborg.spoofax.core:2.5.1";
 
   protected final BaseRepositoryFactory repositoryFactory;
@@ -73,6 +66,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
   public void apply(Project project) {
     PluginManager pluginManager = project.getPluginManager();
     pluginManager.apply(JavaPlugin.class);
+    pluginManager.apply(EclipseCompilerPlugin.class);
 
     configureRepository(project);
     configureExtension(project);
@@ -82,38 +76,11 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
     // Delay configuration until the SpoofaxPluginExtension is configured and repositories have been defined
     project.afterEvaluate(innerProject -> {
-      configureArtifact(innerProject);
       configureEcj(innerProject);
+      configureArtifact(innerProject);
       configureArchiveTask(innerProject);
       configureOverrides(innerProject);
       configureLanugageDependencies(innerProject);
-    });
-  }
-
-  private void configureEcj(Project project) {
-    ConfigurationContainer configurations = project.getConfigurations();
-    Configuration ecjConfiguration = configurations.create(ECJ_CONFIGURATION);
-
-    DependencyHandler dependencies = project.getDependencies();
-    dependencies.add(ECJ_CONFIGURATION, ECJ_DEPENDENCY);
-
-    TaskContainer tasks = project.getTasks();
-    tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task -> {
-      // Fork a new Java process that runs the Eclipse compiler
-      CompileOptions compileOptions = task.getOptions();
-      compileOptions.setFork(true);
-
-      ForkOptions forkOptions = compileOptions.getForkOptions();
-      forkOptions.setExecutable("java");
-      forkOptions.setJvmArgs(Lists.newArrayList(ECJ_CP, ecjConfiguration.getAsPath(), ECJ_MAIN, ECJ_OPTS));
-
-      // Copy over classes to the place where Spoofax expects them
-      task.doLast(action -> {
-        project.copy(copySpec -> {
-          copySpec.from(project.getBuildDir() + "/classes/java/main");
-          copySpec.into("target/classes");
-        });
-      });
     });
   }
 
@@ -243,6 +210,18 @@ public class SpoofaxPlugin implements Plugin<Project> {
   private void configureExtension(Project project) {
     ExtensionContainer extensions = project.getExtensions();
     extensions.create(EXTENSION_NAME, SpoofaxPluginExtension.class, project);
+  }
+
+  private void configureEcj(Project project) {
+    TaskContainer tasks = project.getTasks();
+    tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task ->
+      task.doLast(action ->
+        project.copy(copySpec -> {
+          copySpec.from(project.getBuildDir() + "/classes/java/main");
+          copySpec.into("target/classes");
+        })
+      )
+    );
   }
 
   private void configureArtifact(Project project) {
