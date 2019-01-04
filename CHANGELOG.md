@@ -1,3 +1,7 @@
+# 1.0.3-SNAPSHOT
+
+* (TBA)
+
 # 1.0.2
 
 * Improvement: Apply the Java plugin instead of the Base plugin. Run `compileJava` between `compileLanguage` and `archiveLanguage`.
