@@ -54,7 +54,7 @@ import static nl.martijndwars.spoofax.Utils.archiveFileName;
 @NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
   public static final String ECJ_CONFIGURATION = "ecj";
-  public static final String ECJ_DEPENDENCY = "org.eclipse.jdt.core.compiler:ecj:4.6.1";
+  public static final String ECJ_DEPENDENCY = "org.eclipse.jdt:ecj:3.16.0";
   public static final String ECJ_MAIN = "org.eclipse.jdt.internal.compiler.batch.Main";
   public static final String ECJ_CP = "-classpath";
   public static final String ECJ_OPTS = "-nowarn";
