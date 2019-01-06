@@ -17,6 +17,7 @@ import org.gradle.api.artifacts.DependencySet;
 import org.gradle.api.artifacts.dsl.ArtifactHandler;
 import org.gradle.api.artifacts.dsl.DependencyHandler;
 import org.gradle.api.artifacts.dsl.RepositoryHandler;
+import org.gradle.api.artifacts.type.ArtifactTypeDefinition;
 import org.gradle.api.file.FileCollection;
 import org.gradle.api.internal.artifacts.BaseRepositoryFactory;
 import org.gradle.api.internal.artifacts.dsl.DefaultRepositoryHandler;
@@ -48,6 +49,7 @@ import java.util.Objects;
 import static nl.martijndwars.spoofax.SpoofaxInit.*;
 import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
 import static nl.martijndwars.spoofax.Utils.archiveFileName;
+import static org.gradle.api.plugins.JavaPlugin.*;
 
 @NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
@@ -107,7 +109,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
     Configuration spoofaxLanguageConfiguration = configurations.create(SPOOFAX_LANGUAGE_CONFIGURATION_NAME);
     spoofaxLanguageConfiguration.setTransitive(false);
 
-    Configuration runtimeElementsConfiguration = configurations.getByName(JavaPlugin.RUNTIME_ELEMENTS_CONFIGURATION_NAME);
+    Configuration runtimeElementsConfiguration = configurations.getByName(RUNTIME_ELEMENTS_CONFIGURATION_NAME);
     runtimeElementsConfiguration.extendsFrom(spoofaxLanguageConfiguration);
   }
 
@@ -174,6 +176,18 @@ public class SpoofaxPlugin implements Plugin<Project> {
   }
 
   private void configureJava(Project project) {
+    // Remove the jar artifact that was added by the Java plugin (we only build a .spoofax-language artifact)
+    ConfigurationContainer configurations = project.getConfigurations();
+    Configuration runtimeConfiguration = configurations.getByName(RUNTIME_CONFIGURATION_NAME);
+    runtimeConfiguration.getArtifacts().removeIf(artifact ->
+      artifact.getType().equals(ArtifactTypeDefinition.JAR_TYPE)
+    );
+
+    Configuration runtimeElementsConfiguration = configurations.getByName(RUNTIME_ELEMENTS_CONFIGURATION_NAME);
+    runtimeElementsConfiguration.getArtifacts().removeIf(artifact ->
+      artifact.getType().equals(ArtifactTypeDefinition.JAR_TYPE)
+    );
+
     // Modify source set to use the classic Spoofax language directory layout
     Convention convention = project.getConvention();
     JavaPluginConvention javaPluginConvention = convention.getPlugin(JavaPluginConvention.class);
@@ -184,13 +198,12 @@ public class SpoofaxPlugin implements Plugin<Project> {
     // Add compileOnly dependency on org.metaborg.spoofax.core to the project
     DependencyHandler dependencies = project.getDependencies();
     Dependency dependency = dependencies.create(SPOOFAX_CORE_DEPENDENCY);
-    ConfigurationContainer configurations = project.getConfigurations();
-    Configuration compileOnlyConfiguration = configurations.getByName(JavaPlugin.COMPILE_ONLY_CONFIGURATION_NAME);
+    Configuration compileOnlyConfiguration = configurations.getByName(COMPILE_ONLY_CONFIGURATION_NAME);
     compileOnlyConfiguration.getDependencies().add(dependency);
 
     // Hook into the tasks exposed by the java plugin
     TaskContainer tasks = project.getTasks();
-    Task compileJava = tasks.getByName(JavaPlugin.COMPILE_JAVA_TASK_NAME);
+    Task compileJava = tasks.getByName(COMPILE_JAVA_TASK_NAME);
     Task compileLanguage = tasks.getByName(COMPILE_LANGUAGE_TASK_NAME);
     Task archiveLanguage = tasks.getByName(ARCHIVE_LANGUAGE_TASK_NAME);
 
@@ -214,7 +227,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
   private void configureEcj(Project project) {
     TaskContainer tasks = project.getTasks();
-    tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task ->
+    tasks.named(COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task ->
       task.doLast(action ->
         project.copy(copySpec -> {
           copySpec.from(project.getBuildDir() + "/classes/java/main");
