@@ -21,43 +21,28 @@ import java.util.HashMap;
 import java.util.Map;
 
 public class SpoofaxInit {
-  public static Map<Project, SpoofaxTuple> spoofaxCache;
+  public static Spoofax spoofax;
+  public static SpoofaxMeta spoofaxMeta;
 
   static {
-    spoofaxCache = new HashMap<>();
+    try {
+      spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
+      spoofaxMeta = new SpoofaxMeta(spoofax);
+    } catch (MetaborgException e) {
+      e.printStackTrace();
+    }
   }
 
   public static Spoofax getSpoofax(Project project) {
-    SpoofaxTuple spoofaxTuple = getSpoofaxTuple(project);
-
-    return spoofaxTuple.spoofax;
+    return spoofax;
   }
 
   public static SpoofaxMeta getSpoofaxMeta(Project project) {
-    SpoofaxTuple spoofaxTuple = getSpoofaxTuple(project);
-
-    return spoofaxTuple.spoofaxMeta;
+    return spoofaxMeta;
   }
 
   public static Injector getSptInjector(Project project) {
-    return getSpoofaxMeta(project).injector.createChildInjector(new SPTModule());
-  }
-
-  private static SpoofaxTuple getSpoofaxTuple(Project project) {
-    if (spoofaxCache.containsKey(project)) {
-      return spoofaxCache.get(project);
-    }
-
-    try {
-      Spoofax spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
-      SpoofaxMeta spoofaxMeta = new SpoofaxMeta(spoofax);
-      SpoofaxTuple spoofaxTuple = new SpoofaxTuple(spoofax, spoofaxMeta);
-      spoofaxCache.put(project, spoofaxTuple);
-
-      return spoofaxTuple;
-    } catch (Exception e) {
-      throw new RuntimeException("Unable to create the Spoofax instance.", e);
-    }
+    return spoofaxMeta.injector.createChildInjector(new SPTModule());
   }
 
   public static IProject spoofaxProject(Project project) {
@@ -71,10 +56,14 @@ public class SpoofaxInit {
     ISimpleProjectService projectService = (ISimpleProjectService) getSpoofax(project).projectService;
 
     if (projectService.get(location) != null) {
+      System.out.println("Use cached IProject for location = " + location);
+
       return projectService.get(location);
     }
 
     try {
+      System.out.println("Create new IProject for location = " + location);
+
       return projectService.create(location);
     } catch (MetaborgException e) {
       throw new RuntimeException("Unable to create Spoofax project.", e);
