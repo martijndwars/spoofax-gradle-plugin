@@ -32,7 +32,7 @@ public class LanguageSpx extends AbstractArchiveTask {
   protected final ListProperty<String> overrides;
 
   public LanguageSpx() {
-    setExtension(DEFAULT_EXTENSION);
+    getArchiveExtension().set(DEFAULT_EXTENSION);
 
     inputFile = getProject().getObjects().fileProperty();
     strategoFormat = getProject().getObjects().property(String.class);
@@ -67,7 +67,7 @@ public class LanguageSpx extends AbstractArchiveTask {
     return stream -> {
       try {
         Path source = getInputFile().get().getAsFile().toPath();
-        Path target = getArchivePath().toPath();
+        Path target = getArchiveFile().get().getAsFile().toPath();
 
         getLogger().info("Copy " + source + " to " + target);
         Files.copy(source, target, REPLACE_EXISTING);

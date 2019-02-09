@@ -200,12 +200,17 @@ A consequence is that a plugin user needs to add repositories in which all trans
 
 ## Repositories
 
-The plugin adds a `spoofaxRepos()` function. When used, this function adds all of the following repositories at once:
+The plugin adds a `spoofaxRepos()` function. This function adds the following repositories:
 
-* Metaborg Releaess
-* Metaborg Snapshots
-* Pluto Build
-* Sugar Lang
-* UseTheSource
+* [Metaborg Releases](https://artifacts.metaborg.org/content/repositories/releases/)
+* [Metaborg Snapshots](https://artifacts.metaborg.org/content/repositories/snapshots/)
+* [Pluto Build](https://pluto-build.github.io/mvnrepository/)
+* [Sugar Lang](https://sugar-lang.github.io/mvnrepository/)
+* [UseTheSource](http://nexus.usethesource.io/content/repositories/public/)
 
-In addition, you need to add a repository where the ECJ can be resolved, e.g. `jcenter()`.
+You will need to add a repository where third-party dependencies can be resolved, e.g. `jcenter()` or `mavenCentral()`.
+It is recommended to add the `spoofaxRepos()` _before_ any other repository, because:
+
+- The repositories that are added by `spoofaxRepos()` are specific for the artifacts they contain. For example, the Metaborg repositories will only be contacted for artifacts with group `org.metaborg`. That is, there is no penalty for adding `spoofaxRepos()` first.
+- Third-party repositories do not by default exclude artifacts that are only available in the Spoofax repositories. If a third-party repository is added first, then Gradle will first check if a Spoofax artifact exists in this repository. That is, there is a penalty for adding third-party repositories first.
+
