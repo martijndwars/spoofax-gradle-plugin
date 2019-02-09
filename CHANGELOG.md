@@ -1,6 +1,7 @@
 # 1.0.3-SNAPSHOT
 
-* (TBA)
+* Upgrade: Gradle to 5.2.1. Fix deprecation warnings.
+* Improvement: Match repositories to artifacts (#5).
 
 # 1.0.2
 
