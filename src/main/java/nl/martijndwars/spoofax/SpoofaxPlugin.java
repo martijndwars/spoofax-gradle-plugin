@@ -175,7 +175,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
   private void configureJava(Project project) {
     // Remove the jar artifact that was added by the Java plugin (we only build a .spoofax-language artifact)
     ConfigurationContainer configurations = project.getConfigurations();
-    Configuration runtimeConfiguration = configurations.getByName(RUNTIME_CONFIGURATION_NAME);
+    Configuration runtimeConfiguration = configurations.getByName(RUNTIME_ELEMENTS_CONFIGURATION_NAME);
     runtimeConfiguration.getArtifacts().removeIf(artifact ->
       artifact.getType().equals(ArtifactTypeDefinition.JAR_TYPE)
     );
