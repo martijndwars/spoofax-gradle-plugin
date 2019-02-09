@@ -258,8 +258,8 @@ public class SpoofaxPlugin implements Plugin<Project> {
       File inputFile = project.file("target/" + archiveFileName(languageSpec));
 
       languageSpx.getInputFile().set(inputFile);
-      languageSpx.setBaseName(languageSpec.config().name());
-      languageSpx.setVersion(languageSpec.config().identifier().version.toString());
+      languageSpx.getArchiveBaseName().set(languageSpec.config().name());
+      languageSpx.getArchiveVersion().set(languageSpec.config().identifier().version.toString());
     });
   }
 
