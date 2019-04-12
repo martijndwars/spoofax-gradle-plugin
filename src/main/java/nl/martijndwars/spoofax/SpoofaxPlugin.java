@@ -6,10 +6,7 @@ import nl.martijndwars.spoofax.spoofax.GradleSpoofaxProjectConfigService;
 import nl.martijndwars.spoofax.tasks.*;
 import org.apache.commons.vfs2.FileObject;
 import org.apache.commons.vfs2.FileSystemException;
-import org.gradle.api.NonNullApi;
-import org.gradle.api.Plugin;
-import org.gradle.api.Project;
-import org.gradle.api.Task;
+import org.gradle.api.*;
 import org.gradle.api.artifacts.Configuration;
 import org.gradle.api.artifacts.ConfigurationContainer;
 import org.gradle.api.artifacts.Dependency;
@@ -178,7 +175,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
   private void configureJava(Project project) {
     // Remove the jar artifact that was added by the Java plugin (we only build a .spoofax-language artifact)
     ConfigurationContainer configurations = project.getConfigurations();
-    Configuration runtimeConfiguration = configurations.getByName(RUNTIME_CONFIGURATION_NAME);
+    Configuration runtimeConfiguration = configurations.getByName(RUNTIME_ELEMENTS_CONFIGURATION_NAME);
     runtimeConfiguration.getArtifacts().removeIf(artifact ->
       artifact.getType().equals(ArtifactTypeDefinition.JAR_TYPE)
     );
@@ -193,7 +190,7 @@ public class SpoofaxPlugin implements Plugin<Project> {
     JavaPluginConvention javaPluginConvention = convention.getPlugin(JavaPluginConvention.class);
     SourceSetContainer sourceSets = javaPluginConvention.getSourceSets();
     SourceSet sourceSet = sourceSets.getByName(SourceSet.MAIN_SOURCE_SET_NAME);
-    sourceSet.java(action -> action.setSrcDirs(getSourceDirs()));
+    sourceSet.java(files -> files.setSrcDirs(getJavaSourceDirs()));
 
     // Add compileOnly dependency on org.metaborg.spoofax.core to the project
     DependencyHandler dependencies = project.getDependencies();
@@ -211,7 +208,8 @@ public class SpoofaxPlugin implements Plugin<Project> {
     archiveLanguage.dependsOn(compileJava);
   }
 
-  private Iterable<String> getSourceDirs() {
+  // TODO: Use SpoofaxCommonPaths here?
+  private Iterable<String> getJavaSourceDirs() {
     return Lists.newArrayList(
       "src/main/strategies",
       "src/main/ds",
@@ -227,13 +225,17 @@ public class SpoofaxPlugin implements Plugin<Project> {
 
   private void configureEcj(Project project) {
     TaskContainer tasks = project.getTasks();
-    tasks.named(COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task ->
-      task.doLast(action ->
-        project.copy(copySpec -> {
-          copySpec.from(project.getBuildDir() + "/classes/java/main");
-          copySpec.into("target/classes");
-        })
-      )
+    tasks.named(JavaPlugin.COMPILE_JAVA_TASK_NAME, JavaCompile.class).configure(task ->
+      // NOTE: Use anonymous class instead of lambda (https://github.com/gradle/gradle/issues/5510)
+      task.doLast(new Action<Task>() {
+        @Override
+        public void execute(Task task) {
+          project.copy(copySpec -> {
+            copySpec.from(project.getBuildDir() + "/classes/java/main");
+            copySpec.into("target/classes");
+          });
+        }
+      })
     );
   }
 

@@ -1,0 +1,26 @@
+plugins {
+    id 'nl.martijndwars.spoofax'
+    id 'maven-publish'
+}
+
+group = 'org.example'
+version = '1.0.0-SNAPSHOT'
+description = 'Incremental example'
+
+repositories {
+    jcenter()
+    spoofaxRepos()
+}
+
+spoofax {
+    strategoFormat = 'jar'
+    languageVersion = version
+}
+
+publishing {
+    publications {
+        incremental(MavenPublication) {
+            project.spoofax.component(it)
+        }
+    }
+}

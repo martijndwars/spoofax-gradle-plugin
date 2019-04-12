@@ -1,17 +1,22 @@
 package nl.martijndwars.spoofax.tasks;
 
 import nl.martijndwars.spoofax.SpoofaxPlugin;
+import org.apache.commons.vfs2.FileObject;
+import org.gradle.api.file.FileCollection;
 import org.gradle.api.file.RegularFileProperty;
 import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
+import org.metaborg.spoofax.meta.core.build.SpoofaxLangSpecCommonPaths;
+import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
 import java.io.File;
 
@@ -43,6 +48,27 @@ public class LanguageArchive extends AbstractTask {
   @Input
   public ListProperty<String> getOverrides() {
     return overrides;
+  }
+
+  @InputFiles
+  public FileCollection getSourceFiles() {
+    ISpoofaxLanguageSpec languageSpec = languageSpec(getProject());
+    SpoofaxLangSpecCommonPaths paths = new SpoofaxLangSpecCommonPaths(languageSpec.location());
+    File targetMetaborgDir = toFile(paths.targetMetaborgDir());
+
+    FileCollection targetMetaborgFiles = getProject().fileTree(targetMetaborgDir).filter(file ->
+      !file.getName().equals("stratego.jar") && !file.getName().equals("stratego-javastrat.jar")
+    );
+
+    return getProject().files(
+      toFile(paths.targetClassesDir()),
+      toFile(paths.iconsDir()),
+      targetMetaborgFiles
+    );
+  }
+
+  protected File toFile(FileObject fileObject) {
+    return getSpoofax(getProject()).resourceService.localFile(fileObject);
   }
 
   @OutputFile
