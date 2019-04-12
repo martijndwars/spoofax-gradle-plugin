@@ -2,6 +2,7 @@
 
 * Upgrade: Gradle to 5.2.1. Fix deprecation warnings.
 * Improvement: Match repositories to artifacts (#5).
+* Improvement: Add basic incrementality (no change anywhere -> no rebuild)
 
 # 1.0.2
 

@@ -5,7 +5,11 @@ import nl.martijndwars.spoofax.SpoofaxOverrides;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import org.apache.commons.vfs2.FileObject;
 import org.checkerframework.checker.nullness.qual.Nullable;
+import org.gradle.api.Project;
+import org.gradle.api.file.ConfigurableFileTree;
+import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.AbstractTask;
+import org.gradle.api.logging.LogLevel;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
@@ -64,17 +68,34 @@ public class LanguageCompile extends AbstractTask {
     return overrides;
   }
 
-  // TODO: Ideally we'd use the languagePathService here, but this requires the dependencies (e.g. esv) to be loaded, which is not the case.
   @InputFiles
   public Iterable<File> getInputFiles() {
-    ISpoofaxLanguageSpec languageSpec = languageSpec(getProject());
-    SpoofaxLangSpecCommonPaths paths = new SpoofaxLangSpecCommonPaths(languageSpec.location());
+    Project project = getProject();
 
-    // TODO: This list is incomplete
-    return Lists.newArrayList(
-      toFile(paths.transDir()),
-      getProject().file(MetaborgConstants.FILE_CONFIG)
-    );
+    // Collect all relevant Spoofax sources. See https://bit.ly/2UQJbMj for semantics of include/exclude.
+    ConfigurableFileTree files = project.fileTree(project.getProjectDir(), spec -> {
+      spec.include("metaborg.yaml");
+      spec.include("**/*.esv");
+      spec.include("**/*.sdf3");
+      spec.include("**/*.str");
+      spec.include("**/*.nabl");
+      spec.include("**/*.ts");
+      spec.include("**/*.nabl2");
+      spec.include("**/*.dynsem");
+
+      spec.exclude("target");
+      spec.exclude("build");
+      spec.exclude(".gradle");
+      spec.exclude("**/src-gen");
+      spec.exclude(element -> element.isDirectory() && element.getFile().listFiles().length == 0);
+    });
+
+    getLogger().debug("Files = ");
+    for (File f : files.getFiles()) {
+      getLogger().debug(f.toString());
+    }
+
+    return files;
   }
 
   @OutputDirectory

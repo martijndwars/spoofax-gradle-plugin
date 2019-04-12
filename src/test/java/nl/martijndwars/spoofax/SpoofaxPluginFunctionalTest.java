@@ -10,9 +10,11 @@ import org.junit.jupiter.api.Test;
 import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.nio.file.OpenOption;
 import java.nio.file.Path;
 
 import static java.nio.file.StandardOpenOption.APPEND;
+import static java.nio.file.StandardOpenOption.CREATE_NEW;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -87,7 +89,7 @@ public class SpoofaxPluginFunctionalTest {
   void testIncrementalProjectNoChange() {
     File projectDir = new File(BASE_DIR + "/incremental");
 
-    BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal");
+    BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal", "--info");
 
     Assertions.assertAll(
       () -> assertEquals(SUCCESS, buildResult1.task(":compileLanguage").getOutcome()),
@@ -105,7 +107,7 @@ public class SpoofaxPluginFunctionalTest {
   }
 
   @Test
-  void testIncrementalProjectWithChange() throws IOException {
+  void testIncrementalProjectWithChangeInTransDir() throws IOException {
     File sourceDir = new File(BASE_DIR + "/incremental");
     File projectDir = Files.createTempDirectory("incremental").toFile();
     FileUtils.copyDirectory(sourceDir, projectDir);
@@ -126,6 +128,35 @@ public class SpoofaxPluginFunctionalTest {
       () -> assertEquals(SUCCESS, buildResult2.task(":compileLanguage").getOutcome()),
       () -> assertEquals(SUCCESS, buildResult2.task(":compileJava").getOutcome()),
       () -> assertEquals(SUCCESS, buildResult2.task(":archiveLanguage").getOutcome())
+    );
+
+    projectDir.delete();
+  }
+
+  @Test
+  void testIncrementalProjectWithChangeOutsideTransDir() throws IOException {
+    File sourceDir = new File(BASE_DIR + "/incremental");
+    File projectDir = Files.createTempDirectory("incremental").toFile();
+    FileUtils.copyDirectory(sourceDir, projectDir);
+
+    BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal");
+
+    Assertions.assertAll(
+      () -> assertEquals(SUCCESS, buildResult1.task(":compileLanguage").getOutcome()),
+      () -> assertEquals(SUCCESS, buildResult1.task(":compileJava").getOutcome()),
+      () -> assertEquals(SUCCESS, buildResult1.task(":archiveLanguage").getOutcome())
+    );
+
+    Path newStrFile = projectDir.toPath().resolve("incremental/incremental.str");
+    Files.createDirectory(newStrFile.getParent());
+    Files.write(newStrFile, "module incremental/incremental".getBytes(), CREATE_NEW);
+
+    BuildResult buildResult2 = runGradle(projectDir, ":publishToMavenLocal");
+
+    Assertions.assertAll(
+      () -> assertEquals(SUCCESS, buildResult2.task(":compileLanguage").getOutcome()),
+      () -> assertEquals(UP_TO_DATE, buildResult2.task(":compileJava").getOutcome()),
+      () -> assertEquals(UP_TO_DATE, buildResult2.task(":archiveLanguage").getOutcome())
     );
 
     projectDir.delete();
