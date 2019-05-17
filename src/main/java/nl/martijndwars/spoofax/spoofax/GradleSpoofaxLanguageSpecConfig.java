@@ -74,6 +74,11 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
     return StrategoFormat.valueOf(strategoFormat.get());
   }
 
+  @Override
+  public StrategoBuildSetting strBuildSetting() {
+    return config.strBuildSetting();
+  }
+
   @Nullable
   @Override
   public String strExternalJar() {
