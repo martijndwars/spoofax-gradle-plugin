@@ -25,7 +25,7 @@ Below is an example build script for building a Spoofax language project.
 
 ```groovy
 plugins {
-    id 'nl.martijndwars.spoofax' version '1.1.1'
+    id 'nl.martijndwars.spoofax' version '1.2.0'
 }
 
 repositories {

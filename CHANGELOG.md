@@ -1,6 +1,7 @@
-# 1.1.1-SNAPSHOT
+# 1.2.0
 
-(WIP)
+* Upgrade: Spoofax to 2.5.4.
+* Improvement: Include `*.flo` in input of language compilation task.
 
 # 1.1.0
 
