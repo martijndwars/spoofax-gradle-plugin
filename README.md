@@ -52,6 +52,13 @@ If you get a StackOverflowError or OutOfMemoryError create a `gradle.properties`
 org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
 ```
 
+## Versions
+
+| Plugin version | Spoofax version |
+| -------------- | --------------- |
+| 1.2.0          | 2.5.4           |
+| 1.0.0 - 1.1.0  | 2.5.1           |
+
 ## Recipes
 
 ### Multi-Project Build

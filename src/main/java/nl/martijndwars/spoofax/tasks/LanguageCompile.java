@@ -82,6 +82,7 @@ public class LanguageCompile extends AbstractTask {
       spec.include("**/*.ts");
       spec.include("**/*.nabl2");
       spec.include("**/*.dynsem");
+      spec.include("**/*.flo");
 
       spec.exclude("target");
       spec.exclude("build");
