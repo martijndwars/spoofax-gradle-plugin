@@ -1,3 +1,7 @@
+# 1.2.1-SNAPSHOT
+
+(WIP)
+
 # 1.2.0
 
 * Upgrade: Spoofax to 2.5.4.
