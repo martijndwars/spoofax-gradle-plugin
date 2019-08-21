@@ -6,6 +6,7 @@ import org.gradle.api.internal.AbstractTask;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.Optional;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
@@ -85,6 +86,7 @@ public class LanguageCheck extends AbstractTask {
     getSptInjector(getProject()).getInstance(SPTRunner.class).test(project, sptLanguageImpl, languageImpl);
   }
 
+  @Internal
   protected ILanguageImpl getSptLanguageImpl() {
     Iterable<? extends ILanguageImpl> sptLangs = getSpoofax(getProject()).languageService.getAllImpls(GROUP_ID, LANG_SPT_ID);
 
@@ -101,6 +103,7 @@ public class LanguageCheck extends AbstractTask {
     return Iterables.get(sptLangs, 0);
   }
 
+  @Internal
   protected LanguageIdentifier getLanguageUnderTestIdentifier() {
     if (languageUnderTest.isPresent()) {
       return LanguageIdentifier.parseFull(languageUnderTest.get());
