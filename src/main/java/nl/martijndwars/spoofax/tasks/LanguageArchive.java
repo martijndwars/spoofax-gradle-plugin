@@ -10,6 +10,7 @@ import org.gradle.api.provider.Property;
 import org.gradle.api.provider.Provider;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
+import org.gradle.api.tasks.Internal;
 import org.gradle.api.tasks.OutputFile;
 import org.gradle.api.tasks.TaskAction;
 import org.metaborg.core.MetaborgException;
@@ -76,6 +77,7 @@ public class LanguageArchive extends AbstractTask {
     return outputFile;
   }
 
+  @Internal
   public Provider<File> getLazyOutputFile() {
     LanguageSpecBuildInput buildInput = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
     LanguageIdentifier identifier = buildInput.languageSpec().config().identifier();
