@@ -9,8 +9,8 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 
-import static junit.framework.TestCase.assertNotNull;
 import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
+import static org.junit.jupiter.api.Assertions.assertNotNull;
 
 public class SpoofaxPluginIntegrationTest {
   @Test

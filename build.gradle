@@ -11,11 +11,40 @@ version '1.2.1-SNAPSHOT'
 sourceCompatibility = 1.8
 
 repositories {
-    maven { url 'https://artifacts.metaborg.org/content/repositories/releases/' }
-    maven { url 'https://artifacts.metaborg.org/content/repositories/snapshots/' }
-    maven { url 'https://pluto-build.github.io/mvnrepository/' }
-    maven { url 'https://sugar-lang.github.io/mvnrepository/' }
-    maven { url 'http://nexus.usethesource.io/content/repositories/public/' }
+    maven {
+        url 'https://artifacts.metaborg.org/content/repositories/releases/'
+        mavenContent {
+            includeGroup 'org.metaborg'
+            includeGroup 'org.apache.commons'
+            releasesOnly()
+        }
+    }
+    maven {
+        url 'https://artifacts.metaborg.org/content/repositories/snapshots/'
+        mavenContent {
+            includeGroup 'org.metaborg'
+            releasesOnly()
+        }
+    }
+    maven {
+        url 'https://pluto-build.github.io/mvnrepository/'
+        mavenContent {
+            includeGroup 'build.pluto'
+            includeGroup 'com.cedarsoftware'
+        }
+    }
+    maven {
+        url 'https://sugar-lang.github.io/mvnrepository/'
+        mavenContent {
+            includeGroup 'org.sugarj'
+        }
+    }
+    maven {
+        url 'http://nexus.usethesource.io/content/repositories/public/'
+        mavenContent {
+            includeGroup 'io.usethesource'
+        }
+    }
     jcenter()
 }
 
@@ -24,8 +53,8 @@ dependencies {
     compile group: 'org.metaborg', name: 'org.metaborg.spoofax.meta.core', version: metaborgVersion
     compile group: 'org.metaborg', name: 'org.metaborg.spt.core', version: metaborgVersion
 
-    testCompile group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
-    testRuntime group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
+    testImplementation group: 'org.junit.jupiter', name: 'junit-jupiter-api', version: junitVersion
+    testRuntimeOnly group: 'org.junit.jupiter', name: 'junit-jupiter-engine', version: junitVersion
 
     // See https://intellij-support.jetbrains.com/hc/en-us/community/posts/360002590379/comments/360000316199
     testRuntimeOnly group: 'org.junit.vintage', name: 'junit-vintage-engine', version: junitVersion
