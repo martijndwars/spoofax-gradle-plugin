@@ -102,8 +102,7 @@ task sourcesJar(type: Jar) {
 
 publishing {
     publications {
-        mavenJava(MavenPublication) {
-            from components.java
+        pluginMaven(MavenPublication) {
             artifact sourcesJar
             artifact javadocJar
             pom {
@@ -126,6 +125,5 @@ publishing {
 }
 
 signing {
-    sign publishing.publications.mavenJava
+    sign publishing.publications.pluginMaven
 }
-
