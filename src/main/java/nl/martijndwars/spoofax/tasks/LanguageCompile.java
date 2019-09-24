@@ -44,23 +44,16 @@ public class LanguageCompile extends AbstractTask {
   public static final String JAR_PROVIDER = "target/metaborg/stratego.jar";
 
   protected final Property<String> strategoFormat;
-  protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageCompile() {
     strategoFormat = getProject().getObjects().property(String.class);
-    languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
   }
 
   @Input
   public Property<String> getStrategoFormat() {
     return strategoFormat;
-  }
-
-  @Input
-  public Property<String> getLanguageVersion() {
-    return languageVersion;
   }
 
   @Input
@@ -116,8 +109,9 @@ public class LanguageCompile extends AbstractTask {
   public void run() throws MetaborgException, IOException, InterruptedException {
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
-    LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
-    ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(getProject(), strategoFormat, languageVersion, overrides);
+    // The language version is set to null, because the value should not affect the compilation anyway
+    LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, null, overrides);
+    ISpoofaxLanguageSpec languageSpec = overridenLanguageSpec(getProject(), strategoFormat, null, overrides);
 
     // HACK: Store the strategoFormat to be used by Spoofax
     SpoofaxOverrides.set(getProject().getName(), strategoFormat.get());

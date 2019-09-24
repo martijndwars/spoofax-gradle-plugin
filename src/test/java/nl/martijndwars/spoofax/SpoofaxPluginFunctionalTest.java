@@ -11,9 +11,9 @@ import java.io.File;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.util.regex.Pattern;
 
-import static java.nio.file.StandardOpenOption.APPEND;
-import static java.nio.file.StandardOpenOption.CREATE_NEW;
+import static java.nio.file.StandardOpenOption.*;
 import static org.gradle.testkit.runner.TaskOutcome.SUCCESS;
 import static org.gradle.testkit.runner.TaskOutcome.UP_TO_DATE;
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -108,8 +108,7 @@ public class SpoofaxPluginFunctionalTest {
   @Test
   void testIncrementalProjectWithChangeInTransDir() throws IOException {
     File sourceDir = new File(BASE_DIR + "/incremental");
-    File projectDir = Files.createTempDirectory("incremental").toFile();
-    FileUtils.copyDirectory(sourceDir, projectDir);
+    File projectDir = createTemporaryProject(sourceDir);
 
     BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal");
 
@@ -135,8 +134,7 @@ public class SpoofaxPluginFunctionalTest {
   @Test
   void testIncrementalProjectWithChangeOutsideTransDir() throws IOException {
     File sourceDir = new File(BASE_DIR + "/incremental");
-    File projectDir = Files.createTempDirectory("incremental").toFile();
-    FileUtils.copyDirectory(sourceDir, projectDir);
+    File projectDir = createTemporaryProject(sourceDir);
 
     BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal");
 
@@ -159,6 +157,58 @@ public class SpoofaxPluginFunctionalTest {
     );
 
     projectDir.delete();
+  }
+
+  /**
+   * Test that if we change the version of the language that we build, then the `compileLanguage`
+   * task is up to date, but the `archiveLanguage` task is not.
+   *
+   * @throws IOException
+   */
+  @Test
+  void testChangeLanguageVersionCompileUpTodate() throws IOException {
+    File sourceDir = new File(BASE_DIR + "/version");
+    File projectDir = createTemporaryProject(sourceDir);
+
+    BuildResult buildResult1 = runGradle(projectDir, "clean", ":publishToMavenLocal");
+
+    Assertions.assertAll(
+      () -> assertEquals(SUCCESS, buildResult1.task(":compileLanguage").getOutcome()),
+      () -> assertEquals(SUCCESS, buildResult1.task(":compileJava").getOutcome()),
+      () -> assertEquals(SUCCESS, buildResult1.task(":archiveLanguage").getOutcome())
+    );
+
+    Path path = projectDir.toPath().resolve("gradle.properties");
+    String content = new String(Files.readAllBytes(path));
+    String newContent = content.replaceAll(Pattern.quote("1.2.3"), "3.2.1");
+    Files.write(path, newContent.getBytes(), TRUNCATE_EXISTING);
+
+    BuildResult buildResult2 = runGradle(projectDir, ":publishToMavenLocal");
+
+    Assertions.assertAll(
+      () -> assertEquals(UP_TO_DATE, buildResult2.task(":compileLanguage").getOutcome()),
+      () -> assertEquals(UP_TO_DATE, buildResult2.task(":compileJava").getOutcome()),
+      () -> assertEquals(SUCCESS, buildResult2.task(":archiveLanguage").getOutcome())
+    );
+  }
+
+  /**
+   * Copy the Spoofax project to a temporary directory so it can be modified without changing the
+   * state of subsequent tests.
+   *
+   * @param sourceDir
+   * @return
+   */
+  protected File createTemporaryProject(File sourceDir) {
+    try {
+      String prefix = sourceDir.getName();
+      File targetDir = Files.createTempDirectory(prefix).toFile();
+      FileUtils.copyDirectory(sourceDir, targetDir);
+
+      return targetDir;
+    } catch (IOException e) {
+      throw new RuntimeException("Could not copy project to temporary directory.", e);
+    }
   }
 
   protected TaskOutcome runGradleTask(File projectDir, String task) {

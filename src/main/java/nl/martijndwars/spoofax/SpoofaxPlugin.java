@@ -140,7 +140,6 @@ public class SpoofaxPlugin implements Plugin<Project> {
     SpoofaxPluginExtension extension = project.getExtensions().getByType(SpoofaxPluginExtension.class);
 
     compileLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
-    compileLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
     compileLanguageTask.getOverrides().set(extension.getOverrides());
 
     archiveLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());

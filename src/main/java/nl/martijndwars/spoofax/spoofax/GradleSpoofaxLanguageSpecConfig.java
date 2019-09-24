@@ -143,6 +143,10 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
 
   @Override
   public LanguageIdentifier identifier() {
+    if (version == null) {
+      return config.identifier();
+    }
+
     if (version.get().isEmpty()) {
       return config.identifier();
     }

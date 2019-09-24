@@ -1,6 +1,6 @@
 # 1.2.2-SNAPSHOT
 
-(WIP)
+* Improvement: Make `compileLanguage` independent of the language version.
 
 # 1.2.1
 
