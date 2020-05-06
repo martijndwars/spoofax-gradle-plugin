@@ -20,6 +20,7 @@ import org.metaborg.spoofax.core.stratego.StrategoRuntimeFacet;
 import org.metaborg.spoofax.core.syntax.SyntaxFacet;
 import org.metaborg.spoofax.core.syntax.SyntaxFacetFromESV;
 import org.metaborg.spoofax.core.terms.ITermFactoryService;
+import org.metaborg.spoofax.core.dynamicclassloading.DynamicClassLoadingFacet;
 import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
 import org.spoofax.interpreter.terms.IStrategoAppl;
@@ -148,6 +149,7 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
     }
 
     SyntaxFacet syntaxFacet = null;
+    DynamicClassLoadingFacet dynamicClassLoadingFacet = null;
     StrategoRuntimeFacet strategoRuntimeFacet = null;
     if(esvTerm != null) {
       try {
@@ -160,8 +162,17 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
       }
 
       try {
+        dynamicClassLoadingFacet = GradleDynamicClassLoadingFacetFromESV.create(esvTerm, root);
+        if(!dynamicClassLoadingFacet.jarFiles.isEmpty()) {
+          Iterables.addAll(errors, dynamicClassLoadingFacet.available(resourceService));
+        }
+      } catch(IOException e) {
+        exceptions.add(e);
+      }
+
+      try {
         strategoRuntimeFacet = GradleStrategoRuntimeFacetFromESV.create(esvTerm, root);
-        if(strategoRuntimeFacet != null) {
+        if(!strategoRuntimeFacet.ctreeFiles.isEmpty() || (dynamicClassLoadingFacet != null && !dynamicClassLoadingFacet.jarFiles.isEmpty())) {
           Iterables.addAll(errors, strategoRuntimeFacet.available(resourceService));
         }
       } catch(IOException e) {
@@ -171,7 +182,7 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
 
     final ComponentFactoryRequest request;
     if(errors.isEmpty() && exceptions.isEmpty()) {
-      request = new ComponentFactoryRequest(root, config, esvTerm, syntaxFacet, strategoRuntimeFacet);
+      request = new ComponentFactoryRequest(root, config, esvTerm, syntaxFacet, dynamicClassLoadingFacet, strategoRuntimeFacet);
     } else {
       request = new ComponentFactoryRequest(root, errors, exceptions);
     }
@@ -181,7 +192,7 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
   private IStrategoAppl esvTerm(FileObject location, FileObject esvFile)
     throws ParseError, IOException, MetaborgException {
     final TermReader reader =
-      new TermReader(termFactoryService.getGeneric().getFactoryWithStorageType(IStrategoTerm.MUTABLE));
+      new TermReader(termFactoryService.getGeneric());
     final IStrategoTerm term = reader.parseFromStream(esvFile.getContent().getInputStream());
     if(term.getTermType() != IStrategoTerm.APPL) {
       final String message = logger.format(

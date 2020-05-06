@@ -214,7 +214,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
       "src/main/strategies",
       "src/main/ds",
       "src-gen/stratego-java",
-      "src-gen/ds-java"
+      "src-gen/ds-java",
+      // Since Spoofax 2.5.8 Stratego-generated .java files are placed in src-gen/java instead of src-gen/stratego-java
+      "src-gen/java"
     );
   }
 

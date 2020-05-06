@@ -1,22 +1,18 @@
 package nl.martijndwars.spoofax.tasks;
 
-import com.google.common.collect.Lists;
 import nl.martijndwars.spoofax.SpoofaxOverrides;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import org.apache.commons.vfs2.FileObject;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileTree;
-import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.AbstractTask;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
-import org.metaborg.core.MetaborgConstants;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.action.CompileGoal;
 import org.metaborg.core.build.BuildInput;

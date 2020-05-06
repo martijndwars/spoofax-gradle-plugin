@@ -11,8 +11,8 @@ public class SpoofaxRepositoryHandlerConvention {
   public static final String METABORG_SNAPSHOTS_NAME = "metaborgSnapshots";
   public static final String METABORG_SNAPSHOTS_URL = "https://artifacts.metaborg.org/content/repositories/snapshots/";
 
-  public static final String PLUTO_REPO_NAME = "plutoBuild";
-  public static final String PLUTO_REPO_URL = "https://pluto-build.github.io/mvnrepository/";
+  public static final String METABORG_PUBLIC_NAME = "metaborgPublic";
+  public static final String METABORG_PUBLIC_URL = "https://artifacts.metaborg.org/content/groups/public/";
 
   public static final String SUGAR_REPO_NAME = "sugarLang";
   public static final String SUGAR_REPO_URL = "https://sugar-lang.github.io/mvnrepository/";
@@ -31,7 +31,7 @@ public class SpoofaxRepositoryHandlerConvention {
   public void spoofaxRepos() {
     this.metaborgReleases();
     this.metaborgSnapshots();
-    this.plutoBuild();
+    this.metaborgPublic();
     this.sugarLang();
     this.useTheSource();
   }
@@ -56,8 +56,8 @@ public class SpoofaxRepositoryHandlerConvention {
     );
   }
 
-  public MavenArtifactRepository plutoBuild() {
-    return container.addRepository(createRepository(PLUTO_REPO_URL), PLUTO_REPO_NAME, repository ->
+  public MavenArtifactRepository metaborgPublic() {
+    return container.addRepository(createRepository(METABORG_PUBLIC_URL), METABORG_PUBLIC_NAME, repository ->
       repository.mavenContent(content -> {
         content.includeGroup("build.pluto");
         content.includeGroup("com.cedarsoftware");

@@ -186,8 +186,23 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
   }
 
   @Override
+  public Boolean checkPriorities() {
+    return config.checkPriorities();
+  }
+
+  @Override
+  public Boolean checkOverlap() {
+    return config.checkOverlap();
+  }
+
+  @Override
   public JSGLRVersion jsglrVersion() {
     return config.jsglrVersion();
+  }
+
+  @Override
+  public JSGLR2Logging jsglr2Logging() {
+    return config.jsglr2Logging();
   }
 
   @Override

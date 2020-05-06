@@ -27,7 +27,7 @@ repositories {
         }
     }
     maven {
-        url 'https://pluto-build.github.io/mvnrepository/'
+        url 'https://artifacts.metaborg.org/content/groups/public/'
         mavenContent {
             includeGroup 'build.pluto'
             includeGroup 'com.cedarsoftware'
