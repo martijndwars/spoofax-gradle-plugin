@@ -28,6 +28,7 @@ public class LanguageSpx extends AbstractArchiveTask {
   public static final String DEFAULT_EXTENSION = "spoofax-language";
 
   protected final RegularFileProperty inputFile;
+  protected final Property<Boolean> skipCompile;
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
@@ -36,12 +37,18 @@ public class LanguageSpx extends AbstractArchiveTask {
     getArchiveExtension().set(DEFAULT_EXTENSION);
 
     inputFile = getProject().getObjects().fileProperty();
+    skipCompile = getProject().getObjects().property(Boolean.class);
     strategoFormat = getProject().getObjects().property(String.class);
     languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
 
     // This is necessary because without inputs this task is skipped.
     from(getInputFile());
+  }
+
+  @Input
+  public Property<Boolean> getSkipCompile() {
+    return skipCompile;
   }
 
   @Input
@@ -66,6 +73,11 @@ public class LanguageSpx extends AbstractArchiveTask {
 
   @Override
   protected CopyAction createCopyAction() {
+    // Skip language compilation. Used for test projects, which get the compileLanguage task, even though there is nothing to compile
+    if (skipCompile.get()) {
+      return stream -> WorkResults.didWork(false);
+    }
+
     return stream -> {
       try {
         Path source = getInputFile().get().getAsFile().toPath();

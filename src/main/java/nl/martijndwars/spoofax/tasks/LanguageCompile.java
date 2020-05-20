@@ -1,22 +1,18 @@
 package nl.martijndwars.spoofax.tasks;
 
-import com.google.common.collect.Lists;
 import nl.martijndwars.spoofax.SpoofaxOverrides;
 import nl.martijndwars.spoofax.SpoofaxPlugin;
 import org.apache.commons.vfs2.FileObject;
 import org.checkerframework.checker.nullness.qual.Nullable;
 import org.gradle.api.Project;
 import org.gradle.api.file.ConfigurableFileTree;
-import org.gradle.api.file.FileTree;
 import org.gradle.api.internal.AbstractTask;
-import org.gradle.api.logging.LogLevel;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.tasks.Input;
 import org.gradle.api.tasks.InputFiles;
 import org.gradle.api.tasks.OutputDirectory;
 import org.gradle.api.tasks.TaskAction;
-import org.metaborg.core.MetaborgConstants;
 import org.metaborg.core.MetaborgException;
 import org.metaborg.core.action.CompileGoal;
 import org.metaborg.core.build.BuildInput;
@@ -43,14 +39,21 @@ public class LanguageCompile extends AbstractTask {
   public static final String CTREE_PROVIDER = "target/metaborg/stratego.ctree";
   public static final String JAR_PROVIDER = "target/metaborg/stratego.jar";
 
+  protected final Property<Boolean> skipCompile;
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageCompile() {
+    skipCompile = getProject().getObjects().property(Boolean.class);
     strategoFormat = getProject().getObjects().property(String.class);
     languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
+  }
+
+  @Input
+  public Property<Boolean> getSkipCompile() {
+    return skipCompile;
   }
 
   @Input
@@ -114,6 +117,11 @@ public class LanguageCompile extends AbstractTask {
 
   @TaskAction
   public void run() throws MetaborgException, IOException, InterruptedException {
+    // Skip language compilation. Used for test projects, which get the compileLanguage task, even though there is nothing to compile
+    if (skipCompile.get()) {
+      return;
+    }
+
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
     LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);

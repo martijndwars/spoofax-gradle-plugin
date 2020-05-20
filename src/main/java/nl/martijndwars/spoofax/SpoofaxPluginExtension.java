@@ -6,7 +6,6 @@ import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.gradle.api.publish.maven.MavenPublication;
 import org.gradle.api.tasks.TaskContainer;
-import org.metaborg.core.MetaborgException;
 import org.metaborg.core.language.LanguageIdentifier;
 import org.metaborg.meta.core.project.ILanguageSpec;
 
@@ -16,6 +15,7 @@ import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
 
 public class SpoofaxPluginExtension {
   protected final Project project;
+  protected final Property<Boolean> skipCompile;
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
@@ -23,6 +23,9 @@ public class SpoofaxPluginExtension {
   @Inject
   public SpoofaxPluginExtension(Project project) {
     this.project = project;
+
+    this.skipCompile = project.getObjects().property(Boolean.class);
+    this.skipCompile.set(false);
 
     this.strategoFormat = project.getObjects().property(String.class);
     this.strategoFormat.set(EMPTY_VALUE);
@@ -32,6 +35,10 @@ public class SpoofaxPluginExtension {
 
     this.overrides = project.getObjects().listProperty(String.class);
     this.overrides.set(Collections.emptyList());
+  }
+
+  public Property<Boolean> getSkipCompile() {
+    return skipCompile;
   }
 
   public Property<String> getStrategoFormat() {

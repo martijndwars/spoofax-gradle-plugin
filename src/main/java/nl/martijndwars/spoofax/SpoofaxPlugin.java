@@ -139,14 +139,17 @@ public class SpoofaxPlugin implements Plugin<Project> {
     // Map extension properties to task properties
     SpoofaxPluginExtension extension = project.getExtensions().getByType(SpoofaxPluginExtension.class);
 
+    compileLanguageTask.getSkipCompile().set(extension.getSkipCompile());
     compileLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
     compileLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
     compileLanguageTask.getOverrides().set(extension.getOverrides());
 
+    archiveLanguageTask.getSkipCompile().set(extension.getSkipCompile());
     archiveLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
     archiveLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
     archiveLanguageTask.getOverrides().set(extension.getOverrides());
 
+    spxLanguageTask.getSkipCompile().set(extension.getSkipCompile());
     spxLanguageTask.getStrategoFormat().set(extension.getStrategoFormat());
     spxLanguageTask.getLanguageVersion().set(extension.getLanguageVersion());
     spxLanguageTask.getOverrides().set(extension.getOverrides());
@@ -214,7 +217,9 @@ public class SpoofaxPlugin implements Plugin<Project> {
       "src/main/strategies",
       "src/main/ds",
       "src-gen/stratego-java",
-      "src-gen/ds-java"
+      "src-gen/ds-java",
+      // Since Spoofax 2.5.8 Stratego-generated .java files are placed in src-gen/java instead of src-gen/stratego-java
+      "src-gen/java"
     );
   }
 

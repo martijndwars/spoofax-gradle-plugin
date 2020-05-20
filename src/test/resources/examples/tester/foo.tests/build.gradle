@@ -16,6 +16,7 @@ repositories {
 }
 
 spoofax {
+    skipCompile = true
     strategoFormat = 'ctree'
     languageVersion = version
     overrides = []
