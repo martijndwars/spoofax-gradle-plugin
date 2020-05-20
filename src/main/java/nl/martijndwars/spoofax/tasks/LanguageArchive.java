@@ -25,15 +25,22 @@ import static nl.martijndwars.spoofax.SpoofaxInit.*;
 
 public class LanguageArchive extends AbstractTask {
   protected final RegularFileProperty outputFile;
+  protected final Property<Boolean> skipCompile;
   protected final Property<String> strategoFormat;
   protected final Property<String> languageVersion;
   protected final ListProperty<String> overrides;
 
   public LanguageArchive() {
     outputFile = getProject().getObjects().fileProperty();
+    skipCompile = getProject().getObjects().property(Boolean.class);
     strategoFormat = getProject().getObjects().property(String.class);
     languageVersion = getProject().getObjects().property(String.class);
     overrides = getProject().getObjects().listProperty(String.class);
+  }
+
+  @Input
+  public Property<Boolean> getSkipCompile() {
+    return skipCompile;
   }
 
   @Input
@@ -99,6 +106,11 @@ public class LanguageArchive extends AbstractTask {
 
   @TaskAction
   public void run() throws MetaborgException {
+    // Skip language compilation. Used for test projects, which get the compileLanguage task, even though there is nothing to compile
+    if (skipCompile.get()) {
+      return;
+    }
+
     SpoofaxPlugin.loadLanguageDependencies(getProject());
 
     LanguageSpecBuildInput input = overridenBuildInput(getProject(), strategoFormat, languageVersion, overrides);
