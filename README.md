@@ -1,3 +1,5 @@
+**I no longer maintain this repository. This project has been superseded by https://github.com/metaborg/spoofax.gradle/.**
+
 # Spoofax Gradle Plugin
 
 The Spoofax Gradle plugin makes it possible to build [Spoofax](https://www.metaborg.org/) languages with Gradle.
