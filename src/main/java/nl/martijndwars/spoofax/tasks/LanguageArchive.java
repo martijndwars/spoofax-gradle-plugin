@@ -65,7 +65,7 @@ public class LanguageArchive extends AbstractTask {
     File targetMetaborgDir = toFile(paths.targetMetaborgDir());
 
     FileCollection targetMetaborgFiles = getProject().fileTree(targetMetaborgDir).filter(file ->
-      !file.getName().equals("stratego.jar") && !file.getName().equals("stratego-javastrat.jar")
+      !file.getName().equals("stratego.jar")
     );
 
     return getProject().files(

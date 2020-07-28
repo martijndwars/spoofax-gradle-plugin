@@ -19,14 +19,15 @@ import org.metaborg.spoofax.core.language.LanguageComponentFactory;
 import org.metaborg.spoofax.core.stratego.StrategoRuntimeFacet;
 import org.metaborg.spoofax.core.syntax.SyntaxFacet;
 import org.metaborg.spoofax.core.syntax.SyntaxFacetFromESV;
-import org.metaborg.spoofax.core.terms.ITermFactoryService;
 import org.metaborg.spoofax.core.dynamicclassloading.DynamicClassLoadingFacet;
 import org.metaborg.util.log.ILogger;
 import org.metaborg.util.log.LoggerUtils;
 import org.spoofax.interpreter.terms.IStrategoAppl;
 import org.spoofax.interpreter.terms.IStrategoTerm;
+import org.spoofax.interpreter.terms.ITermFactory;
 import org.spoofax.terms.ParseError;
 import org.spoofax.terms.io.binary.TermReader;
+import org.spoofax.terms.util.TermUtils;
 
 import javax.inject.Inject;
 import java.io.IOException;
@@ -38,21 +39,21 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
 
   private final IResourceService resourceService;
   private final ILanguageComponentConfigService componentConfigService;
-  private final ITermFactoryService termFactoryService;
+  private final ITermFactory termFactory;
 
   @Inject
   public GradleLanguageComponentFactory(
     IResourceService resourceService,
     ILanguageComponentConfigService componentConfigService,
-    ITermFactoryService termFactoryService,
+    ITermFactory termFactory,
     Map<String, IContextFactory> contextFactories,
     Map<String, IContextStrategy> contextStrategies,
     Map<String, ISpoofaxAnalyzer> analyzers) {
-    super(resourceService, componentConfigService, termFactoryService, contextFactories, contextStrategies, analyzers);
+    super(resourceService, componentConfigService, termFactory, contextFactories, contextStrategies, analyzers);
 
     this.resourceService = resourceService;
     this.componentConfigService = componentConfigService;
-    this.termFactoryService = termFactoryService;
+    this.termFactory = termFactory;
   }
 
   @Override
@@ -191,12 +192,11 @@ public class GradleLanguageComponentFactory extends LanguageComponentFactory {
 
   private IStrategoAppl esvTerm(FileObject location, FileObject esvFile)
     throws ParseError, IOException, MetaborgException {
-    final TermReader reader =
-      new TermReader(termFactoryService.getGeneric());
+    final TermReader reader = new TermReader(termFactory);
     final IStrategoTerm term = reader.parseFromStream(esvFile.getContent().getInputStream());
-    if(term.getTermType() != IStrategoTerm.APPL) {
+    if(!TermUtils.isAppl(term)) {
       final String message = logger.format(
-        "Cannot discover language at {}, ESV file at {} does not contain a valid ESV term", location, esvFile);
+          "Cannot discover language at {}, ESV file at {} does not contain a valid ESV term", location, esvFile);
       throw new MetaborgException(message);
     }
     return (IStrategoAppl) term;

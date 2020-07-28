@@ -236,11 +236,6 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
   }
 
   @Override
-  public boolean typesmart() {
-    return config.typesmart();
-  }
-
-  @Override
   public NaBL2Config nabl2Config() {
     return config.nabl2Config();
   }

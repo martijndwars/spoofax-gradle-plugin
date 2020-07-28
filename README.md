@@ -58,6 +58,7 @@ org.gradle.jvmargs=-Xms1g -Xmx2g -Xss32m
 
 | Plugin version | Spoofax version |
 | -------------- | --------------- |
+| 1.2.3          | 2.5.11          |
 | 1.2.2          | 2.5.9           |
 | 1.2.1          | 2.5.7           |
 | 1.2.0          | 2.5.4           |
