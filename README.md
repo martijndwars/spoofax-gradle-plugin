@@ -21,6 +21,19 @@ To publish the plugin to your local Maven repository:
 gradle pTML
 ```
 
+On macOS Catalina, run the build/tests in a Docker container:
+
+```
+cat << EOF > Dockerfile
+FROM container-registry.oracle.com/java/serverjre:8
+WORKDIR /root
+ENTRYPOINT ./gradlew test
+EOF
+
+docker build -t spoofax-gradle-plugin .
+docker run -v /path/to/spoofax-gradle-plugin:/root spoofax-gradle-plugin:latest
+```
+
 ## Usage
 
 Below is an example build script for building a Spoofax language project.
@@ -200,7 +213,7 @@ The `assemble` configuration is made to extend the `spoofaxLanguage` configurati
 ## Java Compilation
 
 The `compileLanguage` task generates Java sources and the `archiveLanguage` task expects the generated Java sources to be compiled.
-Hence, the plugin configures `compileJava` to d epend on `compileLanguage` and to be a dependency of `archiveLanguage`.
+Hence, the plugin configures `compileJava` to depend on `compileLanguage` and to be a dependency of `archiveLanguage`.
 
 A moderately large Spoofax project generates _many_ Java files.
 In fact, Spoofax generates so many Java files that the default JDK compiler runs out of memory (even with `-Xmx4g`).

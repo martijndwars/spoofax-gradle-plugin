@@ -39,9 +39,12 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 
 import javax.inject.Inject;
 import java.io.File;
+import java.io.IOException;
+import java.io.InputStream;
 import java.util.Collection;
 import java.util.List;
 import java.util.Objects;
+import java.util.Properties;
 
 import static nl.martijndwars.spoofax.SpoofaxInit.*;
 import static nl.martijndwars.spoofax.SpoofaxPluginConstants.*;
@@ -50,7 +53,30 @@ import static org.gradle.api.plugins.JavaPlugin.*;
 
 @NonNullApi
 public class SpoofaxPlugin implements Plugin<Project> {
-  public static final String SPOOFAX_CORE_DEPENDENCY = "org.metaborg:org.metaborg.spoofax.core:2.5.1";
+  public static final String SPOOFAX_CORE_DEPENDENCY = "org.metaborg:org.metaborg.spoofax.core:" + getMetaborgVersion();
+
+  /**
+   * Get the Metaborg version.
+   *
+   * The Metaborg version is stored in a version.properties file when the library is built. This
+   * avoids storing the Metaborg version in different places and keeps the Java code generic.
+   *
+   * @return the Metaborg version.
+   */
+  private static String getMetaborgVersion() {
+    try {
+      ClassLoader classLoader = SpoofaxPlugin.class.getClassLoader();
+      InputStream inputStream = classLoader.getResourceAsStream("version.properties");
+      if (inputStream == null) {
+        throw new RuntimeException("Unable to get version.properties stream.");
+      }
+      Properties properties = new Properties();
+      properties.load(inputStream);
+      return properties.getProperty("metaborgVersion");
+    } catch (IOException e) {
+      throw new RuntimeException("Unable to load the properties file.", e);
+    }
+  }
 
   protected final BaseRepositoryFactory repositoryFactory;
   protected final DependencyFactory dependencyFactory;

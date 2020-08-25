@@ -1,6 +1,6 @@
 # 1.2.4-SNAPHSOT
 
-(WIP)
+* Bugfix: The SpoofaxPlugin would incorrectly add a dependency on Spoofax 2.5.1 instead of 2.5.11. This bug was present in Spoofax Gradle plugin since version 1.2.0.
 
 # 1.2.3
 

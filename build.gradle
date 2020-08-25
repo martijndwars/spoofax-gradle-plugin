@@ -61,6 +61,19 @@ dependencies {
     testRuntimeOnly group: 'org.junit.platform', name: 'junit-platform-launcher', version: '1.3.1'
 }
 
+def generatedResourcesDir = file("$buildDir/generated-resources")
+
+task generateVersionFile {
+    def outputFile = file("$generatedResourcesDir/version.properties")
+    inputs.property("version", metaborgVersion)
+    outputs.file(outputFile)
+    doLast {
+        outputFile.text = "metaborgVersion=${metaborgVersion}"
+    }
+}
+
+sourceSets.main.output.dir generatedResourcesDir, builtBy: generateVersionFile
+
 compileJava {
     options.compilerArgs += '-Xlint:deprecation'
 }
