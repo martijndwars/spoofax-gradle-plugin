@@ -40,7 +40,7 @@ Below is an example build script for building a Spoofax language project.
 
 ```groovy
 plugins {
-    id 'nl.martijndwars.spoofax' version '1.2.3'
+    id 'nl.martijndwars.spoofax' version '1.2.4'
 }
 
 repositories {
