@@ -68,7 +68,7 @@ task generateVersionFile {
     inputs.property("version", metaborgVersion)
     outputs.file(outputFile)
     doLast {
-        outputFile.text = "metaborgVersion=${metaborgVersion}"
+        outputFile.text = "metaborgVersion=2.5.14
     }
 }
 
