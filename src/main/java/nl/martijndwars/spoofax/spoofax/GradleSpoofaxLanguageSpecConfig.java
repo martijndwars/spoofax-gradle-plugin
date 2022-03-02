@@ -1,6 +1,8 @@
 package nl.martijndwars.spoofax.spoofax;
 
 import mb.nabl2.config.NaBL2Config;
+import mb.statix.spoofax.IStatixProjectConfig;
+import mb.stratego.build.util.StrategoGradualSetting;
 import nl.martijndwars.spoofax.Utils;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
@@ -54,6 +56,11 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
     return config.prettyPrintLanguage();
   }
 
+  @Override
+  public boolean generateNamespacedGrammar() {
+    return config.generateNamespacedGrammar();
+  }
+
   @Nullable
   @Override
   public String sdfExternalDef() {
@@ -77,6 +84,11 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
   @Override
   public StrategoBuildSetting strBuildSetting() {
     return config.strBuildSetting();
+  }
+
+  @Override
+  public StrategoGradualSetting strGradualSetting() {
+    return config.strGradualSetting();
   }
 
   @Nullable
@@ -206,6 +218,11 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
   }
 
   @Override
+  public boolean statixConcurrentComponent() {
+    return config.statixConcurrentComponent();
+  }
+
+  @Override
   public Collection<IExportConfig> exports() {
     return config.exports();
   }
@@ -238,5 +255,10 @@ public class GradleSpoofaxLanguageSpecConfig implements ISpoofaxLanguageSpecConf
   @Override
   public NaBL2Config nabl2Config() {
     return config.nabl2Config();
+  }
+
+  @Override
+  public IStatixProjectConfig statixConfig() {
+    return config.statixConfig();
   }
 }

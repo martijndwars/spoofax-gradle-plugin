@@ -7,6 +7,7 @@ import com.google.common.collect.Iterables;
 import com.google.common.collect.Lists;
 import com.google.inject.Inject;
 import mb.nabl2.config.NaBL2Config;
+import mb.statix.spoofax.IStatixProjectConfig;
 import nl.martijndwars.spoofax.Utils;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.artifacts.Dependency;
@@ -65,6 +66,11 @@ public class GradleSpoofaxProjectConfigService implements IProjectConfigService 
           @Override
           public NaBL2Config nabl2Config() {
             return projectConfig.nabl2Config();
+          }
+
+          @Override
+          public IStatixProjectConfig statixConfig() {
+            return projectConfig.statixConfig();
           }
 
           @Override

@@ -1,15 +1,20 @@
 package nl.martijndwars.spoofax;
 
 import com.google.inject.Injector;
+import com.google.inject.Module;
 import nl.martijndwars.spoofax.spoofax.GradleSpoofaxLanguageSpec;
 import org.apache.commons.vfs2.FileObject;
 import org.gradle.api.Project;
 import org.gradle.api.provider.ListProperty;
 import org.gradle.api.provider.Property;
 import org.metaborg.core.MetaborgException;
+import org.metaborg.core.plugin.IModulePluginLoader;
+import org.metaborg.core.plugin.IServiceModulePlugin;
+import org.metaborg.core.plugin.ServiceModulePluginLoader;
 import org.metaborg.core.project.IProject;
 import org.metaborg.core.project.ISimpleProjectService;
 import org.metaborg.spoofax.core.Spoofax;
+import org.metaborg.spoofax.core.SpoofaxModule;
 import org.metaborg.spoofax.meta.core.SpoofaxExtensionModule;
 import org.metaborg.spoofax.meta.core.SpoofaxMeta;
 import org.metaborg.spoofax.meta.core.build.LanguageSpecBuildInput;
@@ -17,6 +22,7 @@ import org.metaborg.spoofax.meta.core.project.ISpoofaxLanguageSpec;
 import org.metaborg.spt.core.SPTModule;
 
 import java.io.File;
+import java.util.Collections;
 import java.util.HashMap;
 import java.util.Map;
 
@@ -49,8 +55,14 @@ public class SpoofaxInit {
     }
 
     try {
-      Spoofax spoofax = new Spoofax(new SpoofaxGradleModule(), new SpoofaxExtensionModule());
-      SpoofaxMeta spoofaxMeta = new SpoofaxMeta(spoofax);
+      Spoofax spoofax = new Spoofax(
+        new NullModulePluginLoader(),
+        new SpoofaxGradleModule(),
+        new org.metaborg.mbt.core.SpoofaxExtensionModule(),
+        new org.metaborg.spoofax.meta.core.SpoofaxExtensionModule(),
+        new org.metaborg.spt.core.SpoofaxExtensionModule()
+      );
+      SpoofaxMeta spoofaxMeta = new SpoofaxMeta(spoofax, new NullModulePluginLoader());
       SpoofaxTuple spoofaxTuple = new SpoofaxTuple(spoofax, spoofaxMeta);
       spoofaxCache.put(project, spoofaxTuple);
 
@@ -124,6 +136,13 @@ public class SpoofaxInit {
     public SpoofaxTuple(Spoofax spoofax, SpoofaxMeta spoofaxMeta) {
       this.spoofax = spoofax;
       this.spoofaxMeta = spoofaxMeta;
+    }
+  }
+
+  private static class NullModulePluginLoader implements IModulePluginLoader {
+    @Override
+    public Iterable<Module> modules() throws MetaborgException {
+      return Collections.emptySet();
     }
   }
 }
